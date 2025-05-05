@@ -58,7 +58,6 @@ class Model:
             self.write(file_path=self.name, mode=step)
 
             
-
     def run(self):
         """Run the simulation."""
         # check to remove the lock file
@@ -69,7 +68,7 @@ class Model:
         
         # run the simulation by involving abaqus solver
         # double precision is requirement
-        cmd_command = f"abaqus resultsformat=both job={self.name} cpus=4 gpus=1 ask_delete=off"
+        cmd_command = f"abaqus resultsformat=both job=./{self.name} cpus=4 gpus=1 ask_delete=off"
         subprocess.run(cmd_command, check=True, shell=True, capture_output=True, text=True)
 
     def stop(self):
@@ -158,7 +157,7 @@ class Model:
 
     def write(self, file_path, mode=0):
         try:
-            with open(file_path+'.inp', 'w') as file:
+            with open('.run/'+file_path+'.inp', 'w') as file:
                 file.write("!Grinding simulation process, Author: Vu Hoai Lam\n")
                 file.write("!Email: Lam.VH205731@sis.hust.edu.vn\n")
                 file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=0.0\n")
@@ -169,32 +168,6 @@ class Model:
                     if grain.mat.name not in mats:
                         mats.append(grain.mat.name)
                         mat_lists.append(grain.mat)
-
-                # for mat in mat_lists:    
-                #     ##########################################
-                #     # Define the material
-                #     ########################################## 
-                #     file.write(f"*MATERIAL, NAME={mat.name}\n")
-                #     file.write(f"*Density\n")
-                #     file.write(f"{mat.density},\n")
-                #     file.write(f"*Elastic\n")
-                #     file.write(f" {mat.E}, {mat.u}\n")
-                #     file.write(f"*Plastic, hardening=JOHNSON COOK\n")
-                #     file.write(f"{mat.A}, {mat.B}, {mat.n}, {mat.m}, {mat.Tm}, {mat.Tr}\n")
-                #     file.write(f"*Rate Dependent, type=JOHNSON COOK\n")
-                #     file.write(f"{mat.C}, {mat.e0}\n")
-                #     # file.write(f"*SHEAR FAILURE, ELEMENT DELETION=YES, TYPE=JOHNSON COOK\n")
-                #     # file.write(f"{mat.D1},  {mat.D2}, {mat.D3}, {mat.D4}, {mat.D5}\n")
-                #     file.write(f"*DAMAGE Initiation, CRITERION=JOHNSON COOK\n")
-                #     file.write(f"{mat.D1},  {mat.D2}, {mat.D3}, {mat.D4}, {mat.D5}, {mat.Tm}, {mat.Tr}, 1\n")
-                #     file.write(f"*Damage Evolution, type=DISPLACEMENT\n")
-                #     file.write(f"10,\n")
-                #     file.write(f"*Conductivity, TYPE=ISO\n")
-                #     file.write(f" {mat.k}\n")
-                #     file.write(f"*Specific heat\n")
-                #     file.write(f" {mat.Cp}\n")
-
-
 
                 for mat in mat_lists:
                     file.write(f"*MATERIAL, NAME={mat.name}\n")
@@ -228,26 +201,6 @@ class Model:
                         file.write(f"*Conductivity, TYPE=ISO\n{mat.k}\n")
                     if hasattr(mat, "Cp"):
                         file.write(f"*Specific heat\n{mat.Cp}\n")
-
-
-
-
-                # for t_mat in t_mat_lists:    
-                #     ##########################################
-                #     # Define the material
-                #     ########################################## 
-                #     file.write(f"*MATERIAL, NAME={mat.name}\n")
-                #     file.write(f"*Density\n")
-                #     file.write(f"{mat.density},\n")
-                #     file.write(f"*Elastic\n")
-                #     file.write(f" {mat.E}, {mat.u}\n")
-                #     file.write(f"*Conductivity, TYPE=ISO\n")
-                #     file.write(f" {mat.k}\n")
-                #     file.write(f"*Specific heat\n")
-                #     file.write(f" {mat.Cp}\n")
-                    ##########################################
-                # Write the definition of the part
-                ########################################## 
                 
                 ## write the tool
                 for grain in self.grains:

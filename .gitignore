@@ -1,0 +1,8 @@
+# Ignore Abaqus Script files
+*.rpy
+
+# Ignore virtual environment files
+.venv/
+
+# Ignore abaqus running files
+.run/
