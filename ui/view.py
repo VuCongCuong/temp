@@ -41,7 +41,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.wp_mat.addItems(list(materials.keys()))
         self.tool_mat.addItems(list(materials.keys()))
         self.tool_type.addItems(tool_shapes)
-        self.tool_direction.addItems(tool_directions)
         self.tool_distrubution.addItems(grain_distributions)
         self.tool_mode.addItems(tool_mode)
 
@@ -122,7 +121,6 @@ class Window(QMainWindow, Ui_MainWindow):
     def stop_simulation(self):
         """Stops the simulation."""
         self.model.stop()
-        print("ok")
 
 
         

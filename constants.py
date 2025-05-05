@@ -13,37 +13,6 @@
 # e-6 meter, kilogram, kevin, s,  
 
 materials = {
-    # "aluminium": {
-    #     "type": "jonhson_cook",
-    #     "elastic": {
-    #         "density":2.7e-15,
-    #         "youngs_modulus":70e3,
-    #         "poisson_ratio": 0.33 
-    #     },
-    #     "heat": {
-    #         "heat_capacity": 910e12,
-    #         "thermal_conductivity": 6.6e6,
-    #         "thermal_expansion": 0.000023,
-    #         "specific_heat": 910e12
-    #     },
-    #     "plastic": {
-    #         "A": 520,
-    #         "B": 477,
-    #         "C": 0.001,
-    #         "n": 0.52,
-    #         "m": 0.71,
-    #         "Tr": 298,
-    #         "Tm": 933
-    #     },
-    #     "failure": {
-    #         "D1": 0.096,
-    #         "D2": 0.049,
-    #         "D3": -3.456,
-    #         "D4": 0.016,
-    #         "D5": -1.099,
-    #         "e0": 0.0005
-    #     }
-    # },
     "aluminium": {
         "type": "jonhson_cook",
         "elastic": {
@@ -157,6 +126,5 @@ materials = {
 }
 
 tool_shapes = ["cylinder", "sphere"]
-tool_directions = ["clockwise", "counter-clockwise"]
 tool_mode = ["single", "multi"]
 grain_distributions = ["random", "normal", "uniform"]

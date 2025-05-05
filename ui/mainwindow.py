@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindow.ui'
+## Form generated from reading UI file 'mainwindowvFhGiz.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.2
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -16,11 +16,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QHBoxLayout,
-    QLabel, QMainWindow, QMenu, QMenuBar,
-    QProgressBar, QPushButton, QScrollArea, QSizePolicy,
-    QSpinBox, QStatusBar, QTabWidget, QTextBrowser,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QDoubleSpinBox,
+    QHBoxLayout, QLabel, QMainWindow, QMenu,
+    QMenuBar, QProgressBar, QPushButton, QRadioButton,
+    QScrollArea, QSizePolicy, QSpinBox, QStatusBar,
+    QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -56,7 +56,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.tab_workpiece.sizePolicy().hasHeightForWidth())
         self.tab_workpiece.setSizePolicy(sizePolicy)
         self.tab_workpiece.setBaseSize(QSize(10, 10))
-        self.tab_workpiece.setFocusPolicy(Qt.TabFocus)
+        self.tab_workpiece.setFocusPolicy(Qt.FocusPolicy.TabFocus)
         self.tabWidget.addTab(self.tab_workpiece, "")
         self.tab_par_result = QWidget()
         self.tab_par_result.setObjectName(u"tab_par_result")
@@ -85,14 +85,14 @@ class Ui_MainWindow(object):
         sizePolicy1.setHeightForWidth(self.scrollArea.sizePolicy().hasHeightForWidth())
         self.scrollArea.setSizePolicy(sizePolicy1)
         self.scrollArea.setMinimumSize(QSize(170, 100))
-        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scrollArea.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
+        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scrollArea.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustIgnored)
         self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 192, 536))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, -260, 192, 642))
         self.scrollAreaWidgetContents.setMinimumSize(QSize(192, 0))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -107,30 +107,6 @@ class Ui_MainWindow(object):
         self.label_3.setFont(font)
 
         self.verticalLayout.addWidget(self.label_3)
-
-        self.horizontalLayout_11 = QHBoxLayout()
-        self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
-        self.label_11 = QLabel(self.scrollAreaWidgetContents)
-        self.label_11.setObjectName(u"label_11")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.label_11.sizePolicy().hasHeightForWidth())
-        self.label_11.setSizePolicy(sizePolicy2)
-        self.label_11.setMinimumSize(QSize(70, 20))
-
-        self.horizontalLayout_11.addWidget(self.label_11)
-
-        self.num_step = QSpinBox(self.scrollAreaWidgetContents)
-        self.num_step.setObjectName(u"num_step")
-        self.num_step.setMinimumSize(QSize(0, 20))
-        self.num_step.setMaximum(1000)
-        self.num_step.setValue(1)
-
-        self.horizontalLayout_11.addWidget(self.num_step)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout_11)
 
         self.label = QLabel(self.scrollAreaWidgetContents)
         self.label.setObjectName(u"label")
@@ -159,6 +135,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.label_7 = QLabel(self.scrollAreaWidgetContents)
         self.label_7.setObjectName(u"label_7")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
         self.label_7.setSizePolicy(sizePolicy2)
         self.label_7.setMinimumSize(QSize(50, 20))
@@ -206,11 +185,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.label_5)
 
-        self.tool_type = QComboBox(self.scrollAreaWidgetContents)
-        self.tool_type.setObjectName(u"tool_type")
-        self.tool_type.setMinimumSize(QSize(0, 22))
+        self.tool_mode = QComboBox(self.scrollAreaWidgetContents)
+        self.tool_mode.setObjectName(u"tool_mode")
+        self.tool_mode.setMinimumSize(QSize(0, 22))
 
-        self.verticalLayout.addWidget(self.tool_type)
+        self.verticalLayout.addWidget(self.tool_mode)
 
         self.tool_mat = QComboBox(self.scrollAreaWidgetContents)
         self.tool_mat.setObjectName(u"tool_mat")
@@ -218,11 +197,16 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.tool_mat)
 
-        self.tool_direction = QComboBox(self.scrollAreaWidgetContents)
-        self.tool_direction.setObjectName(u"tool_direction")
-        self.tool_direction.setMinimumSize(QSize(0, 22))
+        self.label_16 = QLabel(self.scrollAreaWidgetContents)
+        self.label_16.setObjectName(u"label_16")
+        sizePolicy2.setHeightForWidth(self.label_16.sizePolicy().hasHeightForWidth())
+        self.label_16.setSizePolicy(sizePolicy2)
+        self.label_16.setMinimumSize(QSize(70, 20))
+        font1 = QFont()
+        font1.setBold(True)
+        self.label_16.setFont(font1)
 
-        self.verticalLayout.addWidget(self.tool_direction)
+        self.verticalLayout.addWidget(self.label_16)
 
         self.tool_distrubution = QComboBox(self.scrollAreaWidgetContents)
         self.tool_distrubution.setObjectName(u"tool_distrubution")
@@ -230,130 +214,31 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.tool_distrubution)
 
-        self.tool_mode = QComboBox(self.scrollAreaWidgetContents)
-        self.tool_mode.setObjectName(u"tool_mode")
-        self.tool_mode.setMinimumSize(QSize(0, 22))
+        self.grain_redistribution = QRadioButton(self.scrollAreaWidgetContents)
+        self.grain_redistribution.setObjectName(u"grain_redistribution")
 
-        self.verticalLayout.addWidget(self.tool_mode)
+        self.verticalLayout.addWidget(self.grain_redistribution)
 
-        self.horizontalLayout_9 = QHBoxLayout()
-        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
-        self.label_8 = QLabel(self.scrollAreaWidgetContents)
-        self.label_8.setObjectName(u"label_8")
-        sizePolicy2.setHeightForWidth(self.label_8.sizePolicy().hasHeightForWidth())
-        self.label_8.setSizePolicy(sizePolicy2)
-        self.label_8.setMinimumSize(QSize(70, 20))
+        self.horizontalLayout_11 = QHBoxLayout()
+        self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
+        self.label_11 = QLabel(self.scrollAreaWidgetContents)
+        self.label_11.setObjectName(u"label_11")
+        sizePolicy2.setHeightForWidth(self.label_11.sizePolicy().hasHeightForWidth())
+        self.label_11.setSizePolicy(sizePolicy2)
+        self.label_11.setMinimumSize(QSize(70, 20))
 
-        self.horizontalLayout_9.addWidget(self.label_8)
+        self.horizontalLayout_11.addWidget(self.label_11)
 
+        self.num_step = QSpinBox(self.scrollAreaWidgetContents)
+        self.num_step.setObjectName(u"num_step")
+        self.num_step.setMinimumSize(QSize(0, 20))
+        self.num_step.setMaximum(1000)
+        self.num_step.setValue(10)
 
-        # Spacing between grains
-        self.horizontalLayout_17 = QHBoxLayout()
-        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
-        self.label_16 = QLabel(self.scrollAreaWidgetContents)
-        self.label_16.setObjectName(u"label_16")
-        sizePolicy2.setHeightForWidth(self.label_16.sizePolicy().hasHeightForWidth())
-        self.label_16.setSizePolicy(sizePolicy2)
-        self.label_16.setMinimumSize(QSize(70, 20))
-        self.label_16.setText(QCoreApplication.translate("MainWindow", u"Spacing", None))
-
-        self.horizontalLayout_17.addWidget(self.label_16)
-
-        self.spacing = QSpinBox(self.scrollAreaWidgetContents)
-        self.spacing.setObjectName(u"spacing")
-        self.spacing.setMinimumSize(QSize(0, 20))
-        self.spacing.setMaximum(1000)
-        self.spacing.setValue(1)
-
-        self.horizontalLayout_17.addWidget(self.spacing)
-
-        self.verticalLayout.addLayout(self.horizontalLayout_17)
-        # End of spacing between grains
+        self.horizontalLayout_11.addWidget(self.num_step)
 
 
-
-
-        self.tool_radius = QSpinBox(self.scrollAreaWidgetContents)
-        self.tool_radius.setObjectName(u"tool_radius")
-        self.tool_radius.setMinimumSize(QSize(0, 20))
-        self.tool_radius.setMaximum(1000)
-        self.tool_radius.setValue(100)
-
-        self.horizontalLayout_9.addWidget(self.tool_radius)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout_9)
-
-        self.horizontalLayout_14 = QHBoxLayout()
-        self.horizontalLayout_14.setObjectName(u"horizontalLayout_14")
-        self.label_13 = QLabel(self.scrollAreaWidgetContents)
-        self.label_13.setObjectName(u"label_13")
-        sizePolicy2.setHeightForWidth(self.label_13.sizePolicy().hasHeightForWidth())
-        self.label_13.setSizePolicy(sizePolicy2)
-        self.label_13.setMinimumSize(QSize(70, 20))
-
-        self.horizontalLayout_14.addWidget(self.label_13)
-
-        self.depth = QSpinBox(self.scrollAreaWidgetContents)
-        self.depth.setObjectName(u"depth")
-        self.depth.setMinimumSize(QSize(0, 20))
-        self.depth.setMaximum(1000)
-        self.depth.setValue(100)
-
-        self.horizontalLayout_14.addWidget(self.depth)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout_14)
-
-        self.horizontalLayout_10 = QHBoxLayout()
-        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
-        self.label_9 = QLabel(self.scrollAreaWidgetContents)
-        self.label_9.setObjectName(u"label_9")
-        sizePolicy2.setHeightForWidth(self.label_9.sizePolicy().hasHeightForWidth())
-        self.label_9.setSizePolicy(sizePolicy2)
-        self.label_9.setMinimumSize(QSize(70, 20))
-
-        self.horizontalLayout_10.addWidget(self.label_9)
-
-        self.velocity = QSpinBox(self.scrollAreaWidgetContents)
-        self.velocity.setObjectName(u"velocity")
-        self.velocity.setMinimumSize(QSize(0, 20))
-        self.velocity.setMaximum(1000)
-        self.velocity.setValue(100)
-
-        self.horizontalLayout_10.addWidget(self.velocity)
-
-        self.verticalLayout.addLayout(self.horizontalLayout_10)
-
-
-
-
-
-
-
-
-        
-
-        self.horizontalLayout_15 = QHBoxLayout()
-        self.horizontalLayout_15.setObjectName(u"horizontalLayout_15")
-        self.label_14 = QLabel(self.scrollAreaWidgetContents)
-        self.label_14.setObjectName(u"label_14")
-        sizePolicy2.setHeightForWidth(self.label_14.sizePolicy().hasHeightForWidth())
-        self.label_14.setSizePolicy(sizePolicy2)
-        self.label_14.setMinimumSize(QSize(70, 20))
-
-        self.horizontalLayout_15.addWidget(self.label_14)
-
-        self.grain_scale = QSpinBox(self.scrollAreaWidgetContents)
-        self.grain_scale.setObjectName(u"grain_scale")
-        self.grain_scale.setMinimumSize(QSize(0, 20))
-        self.grain_scale.setMaximum(1000)
-        self.grain_scale.setValue(1)
-
-        self.horizontalLayout_15.addWidget(self.grain_scale)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout_15)
+        self.verticalLayout.addLayout(self.horizontalLayout_11)
 
         self.horizontalLayout_13 = QHBoxLayout()
         self.horizontalLayout_13.setObjectName(u"horizontalLayout_13")
@@ -398,6 +283,141 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_16)
 
+        self.horizontalLayout_10 = QHBoxLayout()
+        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
+        self.label_9 = QLabel(self.scrollAreaWidgetContents)
+        self.label_9.setObjectName(u"label_9")
+        sizePolicy2.setHeightForWidth(self.label_9.sizePolicy().hasHeightForWidth())
+        self.label_9.setSizePolicy(sizePolicy2)
+        self.label_9.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_10.addWidget(self.label_9)
+
+        self.velocity = QDoubleSpinBox(self.scrollAreaWidgetContents)
+        self.velocity.setObjectName(u"velocity")
+        self.velocity.setMinimumSize(QSize(0, 20))
+
+        self.horizontalLayout_10.addWidget(self.velocity)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_10)
+
+        self.horizontalLayout_17 = QHBoxLayout()
+        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
+        self.label_18 = QLabel(self.scrollAreaWidgetContents)
+        self.label_18.setObjectName(u"label_18")
+        sizePolicy2.setHeightForWidth(self.label_18.sizePolicy().hasHeightForWidth())
+        self.label_18.setSizePolicy(sizePolicy2)
+        self.label_18.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_17.addWidget(self.label_18)
+
+        self.initial_depth = QDoubleSpinBox(self.scrollAreaWidgetContents)
+        self.initial_depth.setObjectName(u"initial_depth")
+        self.initial_depth.setMinimumSize(QSize(0, 20))
+
+        self.horizontalLayout_17.addWidget(self.initial_depth)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_17)
+
+        self.horizontalLayout_18 = QHBoxLayout()
+        self.horizontalLayout_18.setObjectName(u"horizontalLayout_18")
+        self.label_19 = QLabel(self.scrollAreaWidgetContents)
+        self.label_19.setObjectName(u"label_19")
+        sizePolicy2.setHeightForWidth(self.label_19.sizePolicy().hasHeightForWidth())
+        self.label_19.setSizePolicy(sizePolicy2)
+        self.label_19.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_18.addWidget(self.label_19)
+
+        self.depth_increase = QDoubleSpinBox(self.scrollAreaWidgetContents)
+        self.depth_increase.setObjectName(u"depth_increase")
+        self.depth_increase.setMinimumSize(QSize(0, 20))
+
+        self.horizontalLayout_18.addWidget(self.depth_increase)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_18)
+
+        self.label_17 = QLabel(self.scrollAreaWidgetContents)
+        self.label_17.setObjectName(u"label_17")
+        sizePolicy2.setHeightForWidth(self.label_17.sizePolicy().hasHeightForWidth())
+        self.label_17.setSizePolicy(sizePolicy2)
+        self.label_17.setMinimumSize(QSize(70, 20))
+        self.label_17.setFont(font1)
+
+        self.verticalLayout.addWidget(self.label_17)
+
+        self.tool_type = QComboBox(self.scrollAreaWidgetContents)
+        self.tool_type.setObjectName(u"tool_type")
+        self.tool_type.setMinimumSize(QSize(0, 22))
+
+        self.verticalLayout.addWidget(self.tool_type)
+
+        self.horizontalLayout_9 = QHBoxLayout()
+        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
+        self.label_8 = QLabel(self.scrollAreaWidgetContents)
+        self.label_8.setObjectName(u"label_8")
+        sizePolicy2.setHeightForWidth(self.label_8.sizePolicy().hasHeightForWidth())
+        self.label_8.setSizePolicy(sizePolicy2)
+        self.label_8.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_9.addWidget(self.label_8)
+
+        self.tool_radius = QSpinBox(self.scrollAreaWidgetContents)
+        self.tool_radius.setObjectName(u"tool_radius")
+        self.tool_radius.setMinimumSize(QSize(0, 20))
+        self.tool_radius.setMaximum(1000)
+        self.tool_radius.setValue(100)
+
+        self.horizontalLayout_9.addWidget(self.tool_radius)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_9)
+
+        self.horizontalLayout_14 = QHBoxLayout()
+        self.horizontalLayout_14.setObjectName(u"horizontalLayout_14")
+        self.label_13 = QLabel(self.scrollAreaWidgetContents)
+        self.label_13.setObjectName(u"label_13")
+        sizePolicy2.setHeightForWidth(self.label_13.sizePolicy().hasHeightForWidth())
+        self.label_13.setSizePolicy(sizePolicy2)
+        self.label_13.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_14.addWidget(self.label_13)
+
+        self.depth = QSpinBox(self.scrollAreaWidgetContents)
+        self.depth.setObjectName(u"depth")
+        self.depth.setMinimumSize(QSize(0, 20))
+        self.depth.setMaximum(1000)
+        self.depth.setValue(100)
+
+        self.horizontalLayout_14.addWidget(self.depth)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_14)
+
+        self.horizontalLayout_15 = QHBoxLayout()
+        self.horizontalLayout_15.setObjectName(u"horizontalLayout_15")
+        self.label_14 = QLabel(self.scrollAreaWidgetContents)
+        self.label_14.setObjectName(u"label_14")
+        sizePolicy2.setHeightForWidth(self.label_14.sizePolicy().hasHeightForWidth())
+        self.label_14.setSizePolicy(sizePolicy2)
+        self.label_14.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_15.addWidget(self.label_14)
+
+        self.grain_scale = QSpinBox(self.scrollAreaWidgetContents)
+        self.grain_scale.setObjectName(u"grain_scale")
+        self.grain_scale.setMinimumSize(QSize(0, 20))
+        self.grain_scale.setMaximum(1000)
+        self.grain_scale.setValue(1)
+
+        self.horizontalLayout_15.addWidget(self.grain_scale)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_15)
+
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.bStart = QPushButton(self.centralwidget)
         self.bStart.setObjectName(u"bStart")
@@ -428,7 +448,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 867, 22))
+        self.menubar.setGeometry(QRect(0, 0, 867, 33))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         self.menuTool = QMenu(self.menubar)
@@ -468,19 +488,24 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_force), QCoreApplication.translate("MainWindow", u"Force", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_roughness), QCoreApplication.translate("MainWindow", u"Roughness", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Process", None))
-        self.label_11.setText(QCoreApplication.translate("MainWindow", u"Steps", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Workpiece", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Material", None))
         self.wp_mat.setCurrentText("")
         self.label_7.setText(QCoreApplication.translate("MainWindow", u"Scale", None))
         self.label_10.setText(QCoreApplication.translate("MainWindow", u"Ini temp", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"Tool", None))
-        self.label_8.setText(QCoreApplication.translate("MainWindow", u"Radius", None))
-        self.label_13.setText(QCoreApplication.translate("MainWindow", u"Depth", None))
-        self.label_9.setText(QCoreApplication.translate("MainWindow", u"Velocity", None))
-        self.label_14.setText(QCoreApplication.translate("MainWindow", u"GrainSc", None))
+        self.label_16.setText(QCoreApplication.translate("MainWindow", u"Single mode", None))
+        self.grain_redistribution.setText(QCoreApplication.translate("MainWindow", u"Redistribution", None))
+        self.label_11.setText(QCoreApplication.translate("MainWindow", u"Steps", None))
         self.label_12.setText(QCoreApplication.translate("MainWindow", u"nGrains", None))
         self.label_15.setText(QCoreApplication.translate("MainWindow", u"nVertice", None))
+        self.label_9.setText(QCoreApplication.translate("MainWindow", u"Vel (m/s)", None))
+        self.label_18.setText(QCoreApplication.translate("MainWindow", u"Init dep: mm", None))
+        self.label_19.setText(QCoreApplication.translate("MainWindow", u"DepInc: mm", None))
+        self.label_17.setText(QCoreApplication.translate("MainWindow", u"Multiple mode", None))
+        self.label_8.setText(QCoreApplication.translate("MainWindow", u"Radius", None))
+        self.label_13.setText(QCoreApplication.translate("MainWindow", u"Depth", None))
+        self.label_14.setText(QCoreApplication.translate("MainWindow", u"GrainSc", None))
         self.bStart.setText(QCoreApplication.translate("MainWindow", u"Run", None))
         self.bStop.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))

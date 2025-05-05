@@ -60,6 +60,7 @@ class Model:
             
     def run(self):
         """Run the simulation."""
+
         # check to remove the lock file
         file_path = self.name + '.lck'
         if os.path.exists(file_path): # Remove the file 
@@ -68,7 +69,7 @@ class Model:
         
         # run the simulation by involving abaqus solver
         # double precision is requirement
-        cmd_command = f"abaqus resultsformat=both job=./{self.name} cpus=4 gpus=1 ask_delete=off"
+        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=4 gpus=1 scratch=./.temp/ ask_delete=off"
         subprocess.run(cmd_command, check=True, shell=True, capture_output=True, text=True)
 
     def stop(self):
@@ -156,7 +157,11 @@ class Model:
                
 
     def write(self, file_path, mode=0):
+        current_dir = os.getcwd()
+        if not os.path.exists('.run'):
+            os.makedirs('.run')
         try:
+            
             with open('.run/'+file_path+'.inp', 'w') as file:
                 file.write("!Grinding simulation process, Author: Vu Hoai Lam\n")
                 file.write("!Email: Lam.VH205731@sis.hust.edu.vn\n")

@@ -6,9 +6,6 @@ import odbAccess
 from model.abaqus_part import BasePart
 import pickle
 
-
-
-
 class UnionFind:
     """Union-Find (Disjoint-Set) implementation for clustering."""
     def __init__(self):
