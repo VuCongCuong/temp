@@ -1,0 +1,8 @@
+# abaqus python -m ensurepip
+# abaqus python -m pip install --upgrade pip
+# abaqus python -m pip install PySide6
+PySide6
+numpy
+vtk
+gcodeparser
+
