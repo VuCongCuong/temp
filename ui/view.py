@@ -3,6 +3,8 @@ from PySide6.QtWidgets import(
     QMessageBox, 
     QFileDialog
 )
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QPlainTextEdit
+from PySide6.QtCore import Signal, QObject
 
 from ui.VTKMeshViewer import VTKMeshViewer
 from ui.mainwindow import Ui_MainWindow
@@ -13,6 +15,22 @@ from model.material import JonhsonCook, Material
 from constants import *
 import numpy as np
 import threading
+import logging
+
+
+# Custom signal emitter for thread-safe GUI logging
+class QtSignalEmitter(QObject):
+    log_signal = Signal(str)
+
+# Custom logging handler that emits signals
+class QtLogHandler(logging.Handler):
+    def __init__(self, signal_emitter):
+        super().__init__()
+        self.signal_emitter = signal_emitter
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.signal_emitter.log_signal.emit(msg)
 
 class Window(QMainWindow, Ui_MainWindow):
     """Main application window
@@ -34,7 +52,31 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.updateComboBox()
         self.connectSignalsSlots()
+
+        # Set up logger
+        self.signal_emitter = QtSignalEmitter()
+        self.signal_emitter.log_signal.connect(self.append_log)
+
+        log_handler = QtLogHandler(self.signal_emitter)
+        log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+        self.logger = logging.getLogger("main")
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(log_handler)
+
+        # Optional: also print to console
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        self.logger.addHandler(console_handler)
+
+        self.logger.info("Application started.")
     
+    def append_log(self, msg):
+        self.log_output.appendPlainText(msg)
+
+    def log_message(self):
+        self.logger.info("Button clicked and message logged to GUI.")
+
     def updateComboBox(self):
         """Updates the combo box with the material names.
         """
@@ -93,11 +135,15 @@ class Window(QMainWindow, Ui_MainWindow):
 
         
         if self.tool_mode.currentText() == "single": 
-            spacing = self.spacing.value()  # spacing between grains  
-            for i in range(self.num_grains.value()):
-                self.model.import_grains('G'+str(i),self.num_vertices.value(), total_grains = self.num_grains.value(), index=i, spacing = spacing)
-            for grain in self.model.grains:
-                grain.assign_material(self.matt)
+            self.model.import_grains(name = 'G', 
+                                     vertices = self.num_vertices.value(),
+                                     totals = self.num_grains.value(),
+                                     size = self.grain_size.value()*1000, # millimeters to micrometers
+                                     spacing = self.spacing.value(),
+                                     dist_type=self.tool_distrubution.currentText(),
+                                     mat = self.matt,
+                                     init_depth = self.initial_depth.value()*1000, # millimeters to micrometers
+            )
         else:
             # Generate a matrix of grains based on the selected distribution
             self.model.generate_matrix_of_grains(res=100, 

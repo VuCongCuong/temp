@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindowvFhGiz.ui'
+## Form generated from reading UI file 'mainwindowJHSMBx.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -18,9 +18,9 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QDoubleSpinBox,
     QHBoxLayout, QLabel, QMainWindow, QMenu,
-    QMenuBar, QProgressBar, QPushButton, QRadioButton,
-    QScrollArea, QSizePolicy, QSpinBox, QStatusBar,
-    QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
+    QMenuBar, QPlainTextEdit, QProgressBar, QPushButton,
+    QRadioButton, QScrollArea, QSizePolicy, QSpinBox,
+    QStatusBar, QTabWidget, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, -260, 192, 642))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, -202, 192, 724))
         self.scrollAreaWidgetContents.setMinimumSize(QSize(192, 0))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -219,6 +219,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.grain_redistribution)
 
+        self.rigid_flexible = QRadioButton(self.scrollAreaWidgetContents)
+        self.rigid_flexible.setObjectName(u"rigid_flexible")
+
+        self.verticalLayout.addWidget(self.rigid_flexible)
+
         self.horizontalLayout_11 = QHBoxLayout()
         self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
         self.label_11 = QLabel(self.scrollAreaWidgetContents)
@@ -282,6 +287,48 @@ class Ui_MainWindow(object):
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_16)
+
+        self.horizontalLayout_19 = QHBoxLayout()
+        self.horizontalLayout_19.setObjectName(u"horizontalLayout_19")
+        self.label_20 = QLabel(self.scrollAreaWidgetContents)
+        self.label_20.setObjectName(u"label_20")
+        sizePolicy2.setHeightForWidth(self.label_20.sizePolicy().hasHeightForWidth())
+        self.label_20.setSizePolicy(sizePolicy2)
+        self.label_20.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_19.addWidget(self.label_20)
+
+        self.grain_size = QDoubleSpinBox(self.scrollAreaWidgetContents)
+        self.grain_size.setObjectName(u"grain_size")
+        self.grain_size.setMinimumSize(QSize(0, 20))
+        self.grain_size.setValue(0.050000000000000)
+
+        self.horizontalLayout_19.addWidget(self.grain_size)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_19)
+
+        self.horizontalLayout_20 = QHBoxLayout()
+        self.horizontalLayout_20.setObjectName(u"horizontalLayout_20")
+        self.label_21 = QLabel(self.scrollAreaWidgetContents)
+        self.label_21.setObjectName(u"label_21")
+        sizePolicy2.setHeightForWidth(self.label_21.sizePolicy().hasHeightForWidth())
+        self.label_21.setSizePolicy(sizePolicy2)
+        self.label_21.setMinimumSize(QSize(70, 20))
+
+        self.horizontalLayout_20.addWidget(self.label_21)
+
+        self.spacing = QSpinBox(self.scrollAreaWidgetContents)
+        self.spacing.setObjectName(u"spacing")
+        self.spacing.setMinimumSize(QSize(0, 20))
+        self.spacing.setMinimum(4)
+        self.spacing.setMaximum(1000)
+        self.spacing.setValue(10)
+
+        self.horizontalLayout_20.addWidget(self.spacing)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_20)
 
         self.horizontalLayout_10 = QHBoxLayout()
         self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
@@ -441,9 +488,9 @@ class Ui_MainWindow(object):
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
         self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 809, 69))
-        self.textBrowser = QTextBrowser(self.scrollAreaWidgetContents_2)
-        self.textBrowser.setObjectName(u"textBrowser")
-        self.textBrowser.setGeometry(QRect(-5, 1, 811, 201))
+        self.log_output = QPlainTextEdit(self.scrollAreaWidgetContents_2)
+        self.log_output.setObjectName(u"log_output")
+        self.log_output.setGeometry(QRect(-5, 1, 811, 201))
         self.scrollArea_2.setWidget(self.scrollAreaWidgetContents_2)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
@@ -495,10 +542,13 @@ class Ui_MainWindow(object):
         self.label_10.setText(QCoreApplication.translate("MainWindow", u"Ini temp", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"Tool", None))
         self.label_16.setText(QCoreApplication.translate("MainWindow", u"Single mode", None))
-        self.grain_redistribution.setText(QCoreApplication.translate("MainWindow", u"Redistribution", None))
+        self.grain_redistribution.setText(QCoreApplication.translate("MainWindow", u"Redistribution (Y/N)", None))
+        self.rigid_flexible.setText(QCoreApplication.translate("MainWindow", u"Rigid/Fexible", None))
         self.label_11.setText(QCoreApplication.translate("MainWindow", u"Steps", None))
         self.label_12.setText(QCoreApplication.translate("MainWindow", u"nGrains", None))
         self.label_15.setText(QCoreApplication.translate("MainWindow", u"nVertice", None))
+        self.label_20.setText(QCoreApplication.translate("MainWindow", u"Size: mm", None))
+        self.label_21.setText(QCoreApplication.translate("MainWindow", u"Space: um", None))
         self.label_9.setText(QCoreApplication.translate("MainWindow", u"Vel (m/s)", None))
         self.label_18.setText(QCoreApplication.translate("MainWindow", u"Init dep: mm", None))
         self.label_19.setText(QCoreApplication.translate("MainWindow", u"DepInc: mm", None))

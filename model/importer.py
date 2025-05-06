@@ -39,6 +39,7 @@ class Importer():
 
         Arguments:
             filepath (str): The path to the input file
+            scale: (int)
         Returns:
             None
         """
@@ -48,7 +49,6 @@ class Importer():
             trigger = 0 # = 0 for part, 1 for nodes, 2 for elements
             with open(filepath, 'r') as file:
                 lines = file.readlines()
-    
                 for line in lines:
                     line = line.upper() # make string to upper case because in abaqus the string is not sensitive
                     if line[0] != '*':  # ignore if this line is a comment 
@@ -58,7 +58,6 @@ class Importer():
                         elif trigger == 2:  # for line containts element
                             element_data = line.strip().split(',')
                             elements.append([int(i) for i in element_data if i != ''])
-
                     elif 'PART' in line:
                         trigger = 0
                         name = line.split("=")[1].strip() # split by equal character and get the name of the part
@@ -66,8 +65,6 @@ class Importer():
                         trigger = 1
                     elif 'ELEMENT' in line:
                         trigger = 2
-            
-            
 
             # update range of the base
             self.part.xrange, self.part.yrange, self.part.zrange = update_range(nodes)
@@ -111,10 +108,10 @@ class Importer():
                                           stderr=subprocess.PIPE,
                                           shell=True,
                                           text=True)
-        # output, _ = base_encrypted.communicate(input=filepath)
-        with open("initial0.json", "rb") as f:
+        output, _ = base_encrypted.communicate(input=filepath)
+        with open(output, "rb") as f:
             base = pickle.load(f)
-
+            
         return base
 
     

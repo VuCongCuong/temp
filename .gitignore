@@ -1,5 +1,6 @@
 # Ignore Abaqus Script files
 *.rpy
+*.rpy.*
 Grind_*
 
 # Ignore virtual environment files

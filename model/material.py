@@ -1,5 +1,5 @@
 class Material():
-    def __init__(self, name):
+    def __init__(self, name='material'):
         self.name = name
     
     def assignElastic(self, density, E, u):
@@ -14,7 +14,6 @@ class Material():
         """
         self.Cp = Cp
         self.k = k
-  
     
 class JonhsonCook(Material):
     def __init__(self, name):

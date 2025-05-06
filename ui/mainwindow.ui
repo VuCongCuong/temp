@@ -124,9 +124,9 @@
      <property name="geometry">
       <rect>
        <x>0</x>
-       <y>-260</y>
+       <y>-202</y>
        <width>192</width>
-       <height>642</height>
+       <height>724</height>
       </rect>
      </property>
      <property name="minimumSize">
@@ -378,7 +378,14 @@
       <item>
        <widget class="QRadioButton" name="grain_redistribution">
         <property name="text">
-         <string>Redistribution</string>
+         <string>Redistribution (Y/N)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rigid_flexible">
+        <property name="text">
+         <string>Rigid/Fexible</string>
         </property>
        </widget>
       </item>
@@ -483,6 +490,84 @@
         </item>
         <item>
          <widget class="QSpinBox" name="num_vertices">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="minimum">
+           <number>4</number>
+          </property>
+          <property name="maximum">
+           <number>1000</number>
+          </property>
+          <property name="value">
+           <number>10</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_19">
+        <item>
+         <widget class="QLabel" name="label_20">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>70</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Size: mm</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="grain_size">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="value">
+           <double>0.050000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_20">
+        <item>
+         <widget class="QLabel" name="label_21">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>70</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Space: um</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spacing">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -821,7 +906,7 @@
        <height>69</height>
       </rect>
      </property>
-     <widget class="QTextBrowser" name="textBrowser">
+     <widget class="QPlainTextEdit" name="log_output">
       <property name="geometry">
        <rect>
         <x>-5</x>
