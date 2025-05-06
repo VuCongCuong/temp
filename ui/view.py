@@ -94,6 +94,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.actionRun.triggered.connect(self.run_simulation_threaded)
         self.bStart.clicked.connect(self.run_simulation_threaded)
         self.bStop.clicked.connect(self.stop_simulation)
+        self.bGenerate.clicked.connect(self.generate_grains)
+
+        self.vtk_workpiece = VTKMeshViewer(self.tab_workpiece)
 
     def load_gcode(self):
         """Loads a G-code file and displays it in the view.
@@ -116,24 +119,12 @@ class Window(QMainWindow, Ui_MainWindow):
     def plot_mesh(self, base):
         """Plots the mesh in the view.
         """
-        self.vtk_widget = VTKMeshViewer(self.tab_workpiece)
-        self.vtk_widget.load_mesh(base)
         
-    def run_simulation(self):
-        """Runs the simulation.
-        """
+        self.vtk_workpiece.load_mesh(base)
         
-        if self.model.base == None:
-            QMessageBox.warning(self, "Error", "No mesh loaded.")
-            return
-        
-        self.matw = JonhsonCook(self.wp_mat.currentText())
-        self.matw.load_material(materials[self.wp_mat.currentText()])
-        self.model.base.assign_material(self.matw)
+    def generate_grains(self):
         self.matt = JonhsonCook(self.tool_mat.currentText())
         self.matt.load_material_tool(materials[self.tool_mat.currentText()])
-
-        
         if self.tool_mode.currentText() == "single": 
             self.model.import_grains(name = 'G', 
                                      vertices = self.num_vertices.value(),
@@ -151,7 +142,18 @@ class Window(QMainWindow, Ui_MainWindow):
                                                  tool_type=self.tool_type.currentText(),
                                                  mat=self.matt)
             
-            # consider what grid is contact with the other and import it to the current model
+    def run_simulation(self):
+        """Runs the simulation.
+        """
+        
+        if self.model.base == None:
+            QMessageBox.warning(self, "Error", "No mesh loaded.")
+            return
+        
+        self.matw = JonhsonCook(self.wp_mat.currentText())
+        self.matw.load_material(materials[self.wp_mat.currentText()])
+        self.model.base.assign_material(self.matw)
+        
             
 
         for step in range(self.num_step.value()):  

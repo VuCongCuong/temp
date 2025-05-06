@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindowJHSMBx.ui'
+## Form generated from reading UI file 'mainwindowQtDyUM.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, -202, 192, 724))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, -255, 192, 724))
         self.scrollAreaWidgetContents.setMinimumSize(QSize(192, 0))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -323,7 +323,7 @@ class Ui_MainWindow(object):
         self.spacing.setMinimumSize(QSize(0, 20))
         self.spacing.setMinimum(4)
         self.spacing.setMaximum(1000)
-        self.spacing.setValue(10)
+        self.spacing.setValue(200)
 
         self.horizontalLayout_20.addWidget(self.spacing)
 
@@ -468,10 +468,10 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.bStart = QPushButton(self.centralwidget)
         self.bStart.setObjectName(u"bStart")
-        self.bStart.setGeometry(QRect(640, 400, 201, 31))
+        self.bStart.setGeometry(QRect(640, 420, 201, 31))
         self.bStop = QPushButton(self.centralwidget)
         self.bStop.setObjectName(u"bStop")
-        self.bStop.setGeometry(QRect(640, 440, 201, 31))
+        self.bStop.setGeometry(QRect(640, 450, 201, 31))
         self.progressBar = QProgressBar(self.centralwidget)
         self.progressBar.setObjectName(u"progressBar")
         self.progressBar.setGeometry(QRect(10, 480, 831, 23))
@@ -491,7 +491,12 @@ class Ui_MainWindow(object):
         self.log_output = QPlainTextEdit(self.scrollAreaWidgetContents_2)
         self.log_output.setObjectName(u"log_output")
         self.log_output.setGeometry(QRect(-5, 1, 811, 201))
+        self.log_output.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.log_output.setCenterOnScroll(True)
         self.scrollArea_2.setWidget(self.scrollAreaWidgetContents_2)
+        self.bGenerate = QPushButton(self.centralwidget)
+        self.bGenerate.setObjectName(u"bGenerate")
+        self.bGenerate.setGeometry(QRect(640, 390, 201, 31))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
@@ -500,6 +505,8 @@ class Ui_MainWindow(object):
         self.menuFile.setObjectName(u"menuFile")
         self.menuTool = QMenu(self.menubar)
         self.menuTool.setObjectName(u"menuTool")
+        self.menuInfo = QMenu(self.menubar)
+        self.menuInfo.setObjectName(u"menuInfo")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
@@ -507,6 +514,7 @@ class Ui_MainWindow(object):
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuTool.menuAction())
+        self.menubar.addAction(self.menuInfo.menuAction())
         self.menuFile.addAction(self.actionLoad_mesh)
         self.menuFile.addAction(self.actionLoad_gcode)
         self.menuTool.addAction(self.actionRun)
@@ -558,7 +566,9 @@ class Ui_MainWindow(object):
         self.label_14.setText(QCoreApplication.translate("MainWindow", u"GrainSc", None))
         self.bStart.setText(QCoreApplication.translate("MainWindow", u"Run", None))
         self.bStop.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
+        self.bGenerate.setText(QCoreApplication.translate("MainWindow", u"Generate", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
         self.menuTool.setTitle(QCoreApplication.translate("MainWindow", u"Tool", None))
+        self.menuInfo.setTitle(QCoreApplication.translate("MainWindow", u"Info", None))
     # retranslateUi
 

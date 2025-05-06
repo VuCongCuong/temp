@@ -63,14 +63,18 @@ class Model:
                 for i in range(int(totals)):
                     y = yoffset + (i-totals/2) * spacing
                     grain_pos.append((x, y, z))
-
+        grain_coords = []
         for i in range(totals):
             grain = Grain(name+str(i), vertices, size) # name, number of vertices
             grain.mat  = mat
             grain.translate = list(grain_pos[i])
             self.grains.append(grain)
+            grain_coords.append(grain.nodes)
         
         logger.info(f"Generate {totals} abrasive seed(s) with {dist_type} distribution.")
+        
+        return grain_coords
+    
 
     def build(self, step: int, settings=None):
         """Build the model."""
@@ -91,7 +95,7 @@ class Model:
             self.base.mat = self.mat_base
             self.name = f"{self.model_name}_{step}"
             self.write(file_path=self.name, mode=step)
-            
+
     def run(self):
         """Run the simulation."""
 
