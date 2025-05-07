@@ -55,6 +55,7 @@ class Model:
             if totals % 2 != 0:
                 grain_pos.append((x, yoffset, z))
                 for i in range(int(totals/2)):
+                    i += 1
                     y1 = yoffset + i * spacing
                     y2 = yoffset - i * spacing
                     grain_pos.append((x, y1, z))
