@@ -123,10 +123,11 @@ class Window(QMainWindow, Ui_MainWindow):
         self.vtk_workpiece.load_mesh(base)
         
     def generate_grains(self):
+        grain_coords = []
         self.matt = JonhsonCook(self.tool_mat.currentText())
         self.matt.load_material_tool(materials[self.tool_mat.currentText()])
         if self.tool_mode.currentText() == "single": 
-            self.model.import_grains(name = 'G', 
+            grain_coords = self.model.import_grains(name = 'G', 
                                      vertices = self.num_vertices.value(),
                                      totals = self.num_grains.value(),
                                      size = self.grain_size.value()*1000, # millimeters to micrometers
@@ -141,6 +142,16 @@ class Window(QMainWindow, Ui_MainWindow):
                                                  radius=self.tool_radius.value()*1000, # millimeters to micrometers
                                                  tool_type=self.tool_type.currentText(),
                                                  mat=self.matt)
+        
+        self.vtk_workpiece.remove_mesh()  # remove previous abrasive grains
+        
+        for i, grain in enumerate(grain_coords):
+            trans = grain.translate
+            grain_coords[i].nodes = [[node[0], 
+                                      node[1] + trans[0], 
+                                      node[2] + trans[1], 
+                                      node[3] + trans[2]] for node in grain.nodes]  
+            self.vtk_workpiece.load_mesh(grain, False)
             
     def run_simulation(self):
         """Runs the simulation.
