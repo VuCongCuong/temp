@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindowQtDyUM.ui'
+## Form generated from reading UI file 'mainwindowAHfnKt.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, -255, 192, 724))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, -270, 192, 724))
         self.scrollAreaWidgetContents.setMinimumSize(QSize(192, 0))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -343,6 +343,7 @@ class Ui_MainWindow(object):
         self.velocity = QDoubleSpinBox(self.scrollAreaWidgetContents)
         self.velocity.setObjectName(u"velocity")
         self.velocity.setMinimumSize(QSize(0, 20))
+        self.velocity.setValue(30.000000000000000)
 
         self.horizontalLayout_10.addWidget(self.velocity)
 

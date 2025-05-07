@@ -124,7 +124,7 @@
      <property name="geometry">
       <rect>
        <x>0</x>
-       <y>-255</y>
+       <y>-270</y>
        <width>192</width>
        <height>724</height>
       </rect>
@@ -616,6 +616,9 @@
             <height>20</height>
            </size>
           </property>
+          <property name="value">
+           <double>30.000000000000000</double>
+          </property>
          </widget>
         </item>
        </layout>
@@ -934,7 +937,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>generate</string>
+     <string>Generate</string>
     </property>
    </widget>
   </widget>

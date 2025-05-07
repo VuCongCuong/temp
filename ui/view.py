@@ -135,6 +135,7 @@ class Window(QMainWindow, Ui_MainWindow):
                                      dist_type=self.tool_distrubution.currentText(),
                                      mat = self.matt,
                                      init_depth = self.initial_depth.value()*1000, # millimeters to micrometers
+                                     velocity=self.velocity.value()*10e6, # millimeters to micrometers
             )
         else:
             # Generate a matrix of grains based on the selected distribution
@@ -144,7 +145,7 @@ class Window(QMainWindow, Ui_MainWindow):
                                                  mat=self.matt)
         
         self.vtk_workpiece.remove_mesh()  # remove previous abrasive grains
-        
+
         for i, grain in enumerate(grain_coords):
             trans = grain.translate
             grain_coords[i].nodes = [[node[0], 

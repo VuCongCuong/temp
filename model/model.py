@@ -25,6 +25,7 @@ class Model:
         self.ntool_sect = 10
         self.grain_storage = dict()
         self.gra_mat_pos = None
+        self.abra_vel = 0
         
         self.br = 0 # break character counter
     
@@ -35,9 +36,11 @@ class Model:
         return self.base
     
     def import_grains(self, name, vertices, totals=1, size=100,
-                       spacing = 1, dist_type=None, mat=None, init_depth=0, increasing_depth=0):
+                       spacing = 1, dist_type=None, mat=None, 
+                       init_depth=0, increasing_depth=0,
+                       velocity = 1):
         """Import n-abrasive grains to the model."""
-
+        self.abra_vel = velocity
         grain_pos = []
         x = -(size + 100) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
         z = self.base.zrange[1] - init_depth
@@ -468,7 +471,7 @@ class Model:
             
         ## VELOCITY
         file.write(f"*Boundary, type=VELOCITY\n")
-        file.write(f"SET_VEL, 1, 1, 3e7\n")
+        file.write(f"SET_VEL, 1, 1, {self.abra_vel}\n")
         self._write_output_request(file)
         file.write(f"*End Step\n")
     
