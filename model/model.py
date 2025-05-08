@@ -107,7 +107,7 @@ class Model:
         
         # run the simulation by involving abaqus solver
         # double precision is requirement
-        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=4 gpus=1 scratch=./.temp/ ask_delete=off"
+        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=4 gpus=1 int ask_delete=off"
         logger.info(f"Running the simulation with command:\n {cmd_command}")
         subprocess.run(cmd_command, check=True, shell=True, capture_output=True, text=True)
         logger.info(f"Simulation {self.name} is completed.")
