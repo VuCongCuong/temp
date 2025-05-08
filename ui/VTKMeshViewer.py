@@ -1,6 +1,6 @@
 import vtk
-from model.abaqus_part import BasePart
-from PySide6.QtWidgets import QVBoxLayout, QPushButton, QWidget
+from model.abaqus_part import Part
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
@@ -38,6 +38,7 @@ class VTKMeshViewer(QWidget):
 
         super().__init__(parent)
 
+        self.grain_actors = []
         colors = vtk.vtkNamedColors()
         self.Rotating = 0
         self.Panning = 0
@@ -51,16 +52,6 @@ class VTKMeshViewer(QWidget):
         # Create a VTK render window interactor
         self.vtk_widget = QVTKRenderWindowInteractor(self)
         layout.addWidget(self.vtk_widget)
-
-
-
-
-
-
-
-
-
-
 
         self.setLayout(layout)
         # Set up the VTK renderer
@@ -87,18 +78,25 @@ class VTKMeshViewer(QWidget):
         self.renderer.ResetCameraClippingRange()
 
 
-    def load_mesh(self, base: BasePart):
+    def load_mesh(self, part: Part, base=True):
         
         # Create VTK points
         points = vtk.vtkPoints()
-        points.SetNumberOfPoints(len(base.nodes)+1)
-        for i, x, y, z in base.nodes:
+        points.SetNumberOfPoints(len(part.nodes)+1)
+        for i, x, y, z in part.nodes:
             points.SetPoint(i, (x, y, z))
             
         # Create VTK cells
         cells = vtk.vtkCellArray()
-        for element in base.elements:
-            cell = vtk.vtkTetra() if len(element) == 4 else vtk.vtkHexahedron()
+        for element in part.elements:
+            if len(element) == 4:
+                cell = vtk.vtkTriangle()
+            if len(element) == 5:
+                cell = vtk.vtkTetra()
+            if len(element) == 6:
+                cell = vtk.vtkPyramid()
+            else: 
+                cell = vtk.vtkHexahedron()
             element = element[1: len(element)]
             for j, point_id in enumerate(element):
                 cell.GetPointIds().SetId(j, point_id)  # VTK uses 0-based indexing
@@ -107,7 +105,7 @@ class VTKMeshViewer(QWidget):
         # Create PolyData
         mesh = vtk.vtkUnstructuredGrid()
         mesh.SetPoints(points)
-        mesh.SetCells(vtk.VTK_TETRA if len(base.elements[0]) == 4 else vtk.VTK_HEXAHEDRON, cells)
+        mesh.SetCells(vtk.VTK_TETRA if len(part.elements[0]) == 4 else vtk.VTK_HEXAHEDRON, cells)
 
         # Create Mapper
         mapper = vtk.vtkDataSetMapper()
@@ -124,6 +122,17 @@ class VTKMeshViewer(QWidget):
         self.renderer.ResetCamera()
         self.vtk_widget.GetRenderWindow().Render()
 
+        if not base:
+            self.grain_actors.append(actor)
+
+    def remove_mesh(self):
+        """Remove all actors from the renderer.
+        """
+        for actor in self.grain_actors:
+            self.renderer.RemoveActor(actor)
+        
+        # Update the renderer to reflect the changes
+        self.vtk_widget.GetRenderWindow().Render()
     def add_axes_actor(self):
         axes = vtk.vtkAxesActor()
         self.orientation_widget = vtk.vtkOrientationMarkerWidget()
