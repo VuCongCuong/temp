@@ -89,7 +89,14 @@ class VTKMeshViewer(QWidget):
         # Create VTK cells
         cells = vtk.vtkCellArray()
         for element in part.elements:
-            cell = vtk.vtkTetra() if len(element) == 4 else vtk.vtkHexahedron()
+            if len(element) == 4:
+                cell = vtk.vtkTriangle()
+            if len(element) == 5:
+                cell = vtk.vtkTetra()
+            if len(element) == 6:
+                cell = vtk.vtkPyramid()
+            else: 
+                cell = vtk.vtkHexahedron()
             element = element[1: len(element)]
             for j, point_id in enumerate(element):
                 cell.GetPointIds().SetId(j, point_id)  # VTK uses 0-based indexing

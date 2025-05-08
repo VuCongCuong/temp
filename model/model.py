@@ -67,12 +67,14 @@ class Model:
                 for i in range(int(totals)):
                     y = yoffset + (i-totals/2) * spacing
                     grain_pos.append((x, y, z))
+        
         grain_coords = []
         self.grains = [] # reset abrasive grains collection
         for i in range(totals):
             grain = Grain(name+str(i), vertices, size) # name, number of vertices
             grain.mat  = mat
             grain.translate = list(grain_pos[i])
+            # grain.generate_mesh(5)
             self.grains.append(grain)
             grain_coords.append(grain)
         
@@ -230,7 +232,7 @@ class Model:
         except FileNotFoundError:
             print(f"Cannot write to the '{self.model_name}'.")
 
-    def _write_elements(self, file, elements):
+    def _write_base_elements(self, file, elements):
         trigger = 0
         for ele in elements:
             n = len(ele)
@@ -240,6 +242,19 @@ class Model:
             file.write("{:<10}, {}\n".format(ele[0], ",".join(map(str, ele[1:]))))
         return 0    
     
+    def _write_abrasive_elements(self,file, elements):
+        trigger = 0
+        for ele in elements:
+            n = len(ele)
+            if  trigger != n:
+                if n == 4:
+                    file.write("*ELEMENT, TYPE=S3RT\n")
+                else:
+                    file.write(f"*ELEMENT, TYPE=C3D{n-1}T\n")
+                trigger = n
+            file.write("{:<10}, {}\n".format(ele[0], ",".join(map(str, ele[1:]))))
+             
+            
     def _write_list_data(self, file, datas):
         
         br = 0
@@ -300,9 +315,7 @@ class Model:
             for node in grain.nodes:
                 file.write("{:<10}, {:<15}, {:<15}, {:<15}\n".format(node[0], node[1], node[2], node[3]))
             # write the elements
-            file.write("*ELEMENT, TYPE=S3RT\n")
-            for ele in grain.elements:
-                file.write("{:<10}, {:<10}, {:<10}, {:<10}\n".format(ele[0], ele[1], ele[2], ele[3]))
+            self._write_abrasive_elements(file, grain.elements)
             file.write(f"*ELSET, ELSET={grain.name}_ELSET\n")
             self._write_list_data(file, grain.elements) 
 
@@ -315,7 +328,7 @@ class Model:
         file.write("*Node\n")
         for node in self.base.nodes:
             file.write("{:<10}, {:<15}, {:<15}, {:<15}\n".format(node[0], node[1], node[2], node[3]))
-        self._write_elements(file, self.base.elements)
+        self._write_base_elements(file, self.base.elements)
         
         # Define element set
         file.write(f"*ELSET, ELSET={str(self.base.name)}_ELSET\n")
@@ -333,7 +346,7 @@ class Model:
         for grain in self.grains:
             file.write("*INSTANCE, NAME={}, PART={}\n".format(grain.name, grain.name)) 
             # check if part is grain, so translate it 
-            file.write("{}, {}, {}\n".format(grain.translate[0], grain.translate[1], grain.translate[2]))
+            # file.write("{}, {}, {}\n".format(grain.translate[0], grain.translate[1], grain.translate[2]))
             
             file.write("*NSET, NSET={}_NSET\n".format(grain.name))
             self._write_list_data(file, grain.nodes)
@@ -341,7 +354,7 @@ class Model:
         
         # define constrain between node
         file.write(f"*Node\n")
-        file.write("1, -100, 200, 500\n")  # let 1 be the referenece node for tool
+        file.write("1, -100, 0, 0\n")  # let 1 be the referenece node for tool
         file.write("*Nset, nset=SET_VEL\n")
         file.write("1\n")
 
@@ -375,8 +388,6 @@ class Model:
 
         
         # add constraint
-        # for grain in self.grains:
-        #     file.write(f"*Rigid Body, ref node={grain.name}.{grain.name}_REFNSET, elset={grain.name}.{grain.name}_ELSET, isothermal=YES\n")
         file.write(f"*Rigid Body, ref node=SET_VEL, elset=SEED_COLLECT_NSET, isothermal=YES\n")
         file.write("*END ASSEMBLY\n")
 
@@ -460,7 +471,7 @@ class Model:
         ###############################################
         ## DEFINI STEP: Step 1
         ###############################################
-        file.write(f"*Step, name=Step-1, nlgeom=YES\n")
+        file.write(f"*STEP, name=Step-1, nlgeom=YES\n")
         file.write(f"*DYNAMIC TEMPERATURE-DISPLACEMENT, EXPLICIT\n") # 
         file.write(f", 2.2e-5\n")
         
@@ -481,16 +492,16 @@ class Model:
         ## OUTPUT REQUESTS
         ###############################################
         file.write(f"**Restart, write, number interval=1, time marks=NO\n")
-        file.write(f"*Output, field\n")
+        file.write(f"*Output, field, TIME INTERVAL=1e-6\n")
         file.write(f"STATUS\n")
         file.write(f"*Node Output\n")
-        file.write(f"U, V, COORD, NT\n")
+        file.write(f"U, V, A, RF, COORD, NT\n")
         file.write(f"*Element Output, directions=YES, ELSET=BASE.BASE_ELSET\n")
         file.write(f"PE, PEEQ, S, SDEG, STATUS, TEMP\n") # PEVAVG,
         file.write(f"*Element Output, directions=YES, ELSET=G0.G0_ELSET\n")
-        file.write(f"PE, PEEQ, S, SDEG, STATUS, TEMP\n") # PEVAVG,
+        file.write(f"PE, PEEQ, S, SDEG, STATUS, TEMP\n") 
         file.write(f"*Contact Output\n")
-        file.write(f"CSTRESS, CFORCE, CDISP, CSLIPR, CFRICWORK,\n")
+        file.write(f"CSTRESS, CFORCE, CDISP, CSLIPR, CFRICWORK,\n") 
         ## HISTORY OUTPUT
         file.write(f"*Output, history, variable=PRESELECT\n")
         

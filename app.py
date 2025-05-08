@@ -9,4 +9,4 @@ if __name__ == "__main__":
     window = Window(model) # Init the main window
     window.show()
     
-    sys.exit(app.exec()) # Main event loop
+    sys.exit(app.exec()) # Main event loop 

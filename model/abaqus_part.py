@@ -1,9 +1,13 @@
-import numpy as np
+
 
 import gmsh
+import meshio
+import numpy as np
+
 from scipy.spatial import ConvexHull
 from scipy.stats import uniform
 from  model.material import Material, JonhsonCook
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 class Part():
 
@@ -12,9 +16,9 @@ class Part():
         Initialize the Part class with a name and empty dictionaries for nodes and elements.
         -   the nodes contain the following each node which contains these information:
             [0] node id, [1:3] coordinates, [4] temperature, [5] velocity, [6] acceleration, 
-            [7] density, [8] young modulus, [9] force
+            [7] density, [8] young modulus, [9:11] force
         -   the elements contain the following each element which contains these information:
-            [0] element id, [1:3] node ids, [4:6] stress, [7:9] strain, [10] damage, [11] state
+            [0] element id, [1:8] node ids, [9:15] stress, [16:22] strain, [23] damage, [24] state
         """
         self.name           = name
         self.nodes          =  {} 
@@ -113,24 +117,18 @@ class Grain(Part):
         return points
         
     def gen_convex_hull_grain(self, number_of_points):
-        
-        max_angle = 180
-        min_angle = 0
-        while (max_angle > 173) and (min_angle < 5):
-            points = self._gen_rand_spherical_points(number_of_points)
-            hull = ConvexHull(points)
-            normals = []
-            
-            for simplex in hull.simplices:
-                # Calculate the normal of the face
-                v0, v1, v2 = points[simplex]
-                normal = np.cross(v1 - v0, v2 - v0)
-                normal = normal / np.linalg.norm(normal)  # Normalize the normal vector
-                normals.append(normal)
 
-            min_angle = self._calc_min_angle(normals)
-            max_angle = self._calc_max_angle(normals)
+        points = self._gen_rand_spherical_points(number_of_points)
+        hull = ConvexHull(points)
+        normals = []
         
+        for simplex in hull.simplices:
+            # Calculate the normal of the face
+            v0, v1, v2 = points[simplex]
+            normal = np.cross(v1 - v0, v2 - v0)
+            normal = normal / np.linalg.norm(normal)  # Normalize the normal vector
+            normals.append(normal)
+    
         nodes = [ [i] + list(node) for i, node in enumerate(points[1:], start=1) ]
         elements = [ [i] + list(nodes) for i, nodes in enumerate(hull.simplices, start=1) ]
         
@@ -152,59 +150,91 @@ class Grain(Part):
         
         self.nodes = nodes
         self.elements = elements
-
-    def _calc_max_angle(self, normals):
-        max_angle = 0  # Start with a minimum angle
-        for i in range(len(normals)):
-            for j in range(i + 1, len(normals)):
-                # Calculate the angle between normals
-                n1 = normals[i]
-                n2 = normals[j]
-                cos_theta = np.dot(n1, n2)
-                angle = np.degrees(np.arccos(np.clip(cos_theta, -1.0, 1.0)))  # Clip for numerical stability
-                max_angle = max(max_angle, angle)
-
-        return max_angle
-    def _calc_min_angle(self, normals):
-        min_angle = 180  # Start with a maximum angle
-        for i in range(len(normals)):
-            for j in range(i + 1, len(normals)):
-                # Calculate the angle between normals
-                n1 = normals[i]
-                n2 = normals[j]
-                cos_theta = np.dot(n1, n2)
-                angle = np.degrees(np.arccos(np.clip(cos_theta, -1.0, 1.0)))  # Clip for numerical stability
-                min_angle = min(min_angle, angle)
-
-        return min_angle
     
     def generate_mesh(self, mesh_size: float):
-        """Generate tetrahedral mesh for the grain by gmsh"""
+        points = np.array([node[1:] for node in self.nodes])  # Convert nodes to NumPy array
+        cells = [("triangle", np.array([[node_id - 1 for node_id in element[1:]] for element in self.elements]))]  # Adjust indices to be zero-based
+        meshio.write_points_cells(
+            "convex_hull.stl",
+            points,
+            cells
+        )
+        
         gmsh.initialize()
-        gmsh.model.add(self.name)
+        gmsh.option.setNumber("General.Terminal", 1)
 
-        # Add nodes
-        for node in self.nodes:
-            gmsh.model.geo.addPoint(node[1], node[2], node[3], mesh_size, node[0])
+        # Load the STL file
+        gmsh.merge("convex_hull.stl")  # replace with your file name
 
-        # Add elements (triangular faces of the convex hull)
-        for element in self.elements:
-            gmsh.model.geo.addTriangle(element[1], element[2], element[3])
+        # Classify surfaces to prepare for volume definition
+        angle = 40  # angle threshold for sharp edges
+        force_parametrizable_patches = True
+        include_boundary = True
+        curve_angle = 180
+        gmsh.model.mesh.classifySurfaces(angle * 3.14159 / 180., include_boundary,
+                                        force_parametrizable_patches, curve_angle * 3.14159 / 180.)
 
-        # Synchronize the model
+        # Create geometry from classified STL
+        gmsh.model.mesh.createGeometry()
+
+        # Create surface loop and volume (if it's a closed STL)
+        surfaces = gmsh.model.getEntities(2)
+        surface_tags = [s[1] for s in surfaces]
+        sl = gmsh.model.geo.addSurfaceLoop(surface_tags)
+        vol = gmsh.model.geo.addVolume([sl])
         gmsh.model.geo.synchronize()
 
-        # Generate 3D mesh
+        # Mesh size controls (optional)
+
+        # Calculate bounding box dimensions
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(-1, -1)
+        bounding_box_diagonal = ((xmax - xmin)**2 + (ymax - ymin)**2 + (zmax - zmin)**2)**0.5
+
+        # Set mesh size as a proportion of the bounding box diagonal
+        proportion = 0.05  # Adjust this proportion as needed
+        mesh_size = bounding_box_diagonal * proportion
+
+        gmsh.option.setNumber("Mesh.CharacteristicLengthMin", mesh_size)
+        gmsh.option.setNumber("Mesh.CharacteristicLengthMax", mesh_size)    # Generate 3D mesh
         gmsh.model.mesh.generate(3)
 
-        # Extract nodes and elements from gmsh
+        # Launch GUI (optional)
+        
+        # Extract the mesh data back into nodes and elements
         node_tags, node_coords, _ = gmsh.model.mesh.getNodes()
-        element_types, element_tags, element_node_tags = gmsh.model.mesh.getElements()
-
-        # Update self.nodes and self.elements with the generated mesh
-        self.nodes = [[tag] + list(node_coords[3 * (tag - 1):3 * tag]) for tag in node_tags]
-        self.elements = [[tag] + list(element_node_tags[i]) for i, tag in enumerate(element_tags)]
-
+        
+        self.nodes = [[int(tag)] + list(coord) for tag, coord in zip(node_tags, node_coords.reshape(-1, 3))]
+        element_types, element_tags, node_tags = gmsh.model.mesh.getElements(dim=3)
+        self.elements = []
+        for elem_type, elems, nodes in zip(element_types, element_tags, node_tags):
+            nodes = np.array(nodes).reshape(len(elems), -1)  # Reshape nodes to match elements
+            for elem, node_group in zip(elems, nodes):
+                self.elements.append([int(elem)] + list(map(int, node_group)))
+        # Write the mesh to a file
+        
+        # self.plot_mesh()
         gmsh.finalize()
-        nodes = np.array(self.nodes) * mesh_size
-        elements = np.array(self.elements)
+    
+    def plot_mesh(self):
+        # gmsh.fltk.run()
+        import matplotlib.pyplot as plt
+
+        # Extract node coordinates
+        node_coords = np.array([node[1:] for node in self.nodes])
+
+        # Plot nodes
+        fig = plt.figure(figsize=(10, 7))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(node_coords[:, 0], node_coords[:, 1], node_coords[:, 2], c='b', marker='', label='Nodes')
+
+        # Plot elements
+        for element in self.elements:
+            element_nodes = np.array([self.nodes[node_id - 1][1:] for node_id in element[1:]])
+            poly = Poly3DCollection([element_nodes], alpha=0.2, edgecolor='k')
+            ax.add_collection3d(poly)
+
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.legend()
+        plt.show()
