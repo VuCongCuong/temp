@@ -81,6 +81,7 @@ class VTKMeshViewer(QWidget):
     def load_mesh(self, part: Part, base=True):
         
         # Create VTK points
+    
         points = vtk.vtkPoints()
         points.SetNumberOfPoints(len(part.nodes)+1)
         for i, x, y, z in part.nodes:
@@ -99,13 +100,23 @@ class VTKMeshViewer(QWidget):
                 cell = vtk.vtkHexahedron()
             element = element[1: len(element)]
             for j, point_id in enumerate(element):
-                cell.GetPointIds().SetId(j, point_id)  # VTK uses 0-based indexing
+                if base:
+                    cell.GetPointIds().SetId(j, point_id)  # VTK uses 0-based indexing
+                else:
+                    cell.GetPointIds().SetId(j, point_id)
             cells.InsertNextCell(cell)
 
         # Create PolyData
         mesh = vtk.vtkUnstructuredGrid()
         mesh.SetPoints(points)
-        mesh.SetCells(vtk.VTK_TETRA if len(part.elements[0]) == 4 else vtk.VTK_HEXAHEDRON, cells)
+        if len(part.elements[0]) == 4:
+            mesh.SetCells(vtk.VTK_TETRA, cells)
+        elif len(part.elements[0]) == 3:
+            mesh.SetCells(vtk.VTK_TRIANGLE, cells)
+        elif len(part.elements[0]) == 5:
+            mesh.SetCells(vtk.VTK_TETRA, cells)
+        else:
+            mesh.SetCells(vtk.VTK_HEXAHEDRON, cells)
 
         # Create Mapper
         mapper = vtk.vtkDataSetMapper()
@@ -119,7 +130,8 @@ class VTKMeshViewer(QWidget):
 
         # Add actor to renderer
         self.renderer.AddActor(actor)
-        self.renderer.ResetCamera()
+        if base:
+            self.renderer.ResetCamera()
         self.vtk_widget.GetRenderWindow().Render()
 
         if not base:
