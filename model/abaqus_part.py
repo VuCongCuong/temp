@@ -8,6 +8,7 @@ from scipy.spatial import ConvexHull
 from scipy.stats import uniform
 from  model.material import Material, JonhsonCook
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import pyvista as pv
 
 class Part():
 
@@ -206,11 +207,11 @@ class Grain(Part):
         self.nodes = [[int(tag)] + list(coord) for tag, coord in zip(node_tags, node_coords.reshape(-1, 3))]
         element_types, element_tags, node_tags = gmsh.model.mesh.getElements(dim=3)
         self.elements = []
-        for elem_type, elems, nodes in zip(element_types, element_tags, node_tags):
-            nodes = np.array(nodes).reshape(len(elems), -1)  # Reshape nodes to match elements
-            for elem, node_group in zip(elems, nodes):
-                self.elements.append([int(elem)] + list(map(int, node_group)))
-        # Write the mesh to a file
+        
+        for i in range(len(element_tags[0])):
+            index1 = element_types[0]*i
+            index2 = element_types[0]*(i+1)
+            self.elements.append([i+1, *node_tags[0][index1:index2]])
         
         # self.plot_mesh()
         gmsh.finalize()
@@ -237,4 +238,3 @@ class Grain(Part):
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         ax.legend()
-        plt.show()

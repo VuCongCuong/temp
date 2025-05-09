@@ -345,9 +345,6 @@ class Model:
         # write the tool assembly
         for grain in self.grains:
             file.write("*INSTANCE, NAME={}, PART={}\n".format(grain.name, grain.name)) 
-            # check if part is grain, so translate it 
-            # file.write("{}, {}, {}\n".format(grain.translate[0], grain.translate[1], grain.translate[2]))
-            
             file.write("*NSET, NSET={}_NSET\n".format(grain.name))
             self._write_list_data(file, grain.nodes)
             file.write("*END INSTANCE\n")
@@ -386,9 +383,8 @@ class Model:
         file.write("*Surface, type=NODE, name=s_Set_2_CNS_, internal\n")
         file.write("BASE.S_SET_2, 1.\n")
 
-        
         # add constraint
-        file.write(f"*Rigid Body, ref node=SET_VEL, elset=SEED_COLLECT_NSET, isothermal=YES\n")
+        file.write(f"*Rigid Body, ref node=SET_VEL, elset=SEED_COLLECT_NSET, isothermal=NO\n")
         file.write("*END ASSEMBLY\n")
 
     def _write_element_control(self, file):
@@ -447,11 +443,7 @@ class Model:
         
         if mode == 0:
             file.write("BASE.BASE_NSET, 20\n")
-        ###############################################
-        ## DEFINI STEP: Initial step
-        ###############################################
-        # file.write(f"*Boundary, type=VELOCITY\n")
-        # file.write(f"SET_VEL, 1, 1\n")
+       
 
     def _write_interaction(self, file):
         """Write the interaction properties to the input file."""
