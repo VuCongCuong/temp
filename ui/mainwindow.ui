@@ -124,7 +124,7 @@
      <property name="geometry">
       <rect>
        <x>0</x>
-       <y>-270</y>
+       <y>-324</y>
        <width>192</width>
        <height>724</height>
       </rect>
@@ -651,6 +651,9 @@
             <width>0</width>
             <height>20</height>
            </size>
+          </property>
+          <property name="minimum">
+           <double>-100.000000000000000</double>
           </property>
          </widget>
         </item>

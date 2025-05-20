@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindowAHfnKt.ui'
+## Form generated from reading UI file 'mainwindowxlwsEe.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, -270, 192, 724))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, -324, 192, 724))
         self.scrollAreaWidgetContents.setMinimumSize(QSize(192, 0))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -363,6 +363,7 @@ class Ui_MainWindow(object):
         self.initial_depth = QDoubleSpinBox(self.scrollAreaWidgetContents)
         self.initial_depth.setObjectName(u"initial_depth")
         self.initial_depth.setMinimumSize(QSize(0, 20))
+        self.initial_depth.setMinimum(-100.000000000000000)
 
         self.horizontalLayout_17.addWidget(self.initial_depth)
 

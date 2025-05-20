@@ -127,8 +127,6 @@ class Model:
         cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=4 scratch=.temp/ ask_delete=off"
         logger.info(f"Running the simulation with command:\n {cmd_command}")
         try:
-            # thread = threading.Thread(target=self.run_simulation)
-            # thread.start()
             abaqus_path = r"C:\SIMULIA\Abaqus\Commands"
             env = os.environ.copy()
             env["PATH"] = abaqus_path + os.pathsep + env["PATH"]
@@ -235,7 +233,7 @@ class Model:
             with open('.run/'+file_path+'.inp', 'w') as file:
                 file.write("!Grinding simulation process, Author: Vu Hoai Lam\n")
                 file.write("!Email: Lam.VH205731@sis.hust.edu.vn\n")
-                file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=0.0\n")
+                file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=-273.5\n")
                 mats = [self.base.mat.name]
                 mat_lists = [self.base.mat]
                 for grain in self.grains:
