@@ -5,6 +5,7 @@ import numpy as np
 import odbAccess
 from abaqusConstants import *
 from model.merge_node import cluster_elements_optimized
+import os
 
 def get_result(filepath, part_name):
     base_information = []
@@ -64,6 +65,7 @@ def get_result(filepath, part_name):
                                 damage_map[ele[0]], status_map[ele[0]]] for ele in list_of_element]
             base_information.append(extract_datas.copy()) # append the data to the list
             # update part range
+            
             with open('result_step=' + str(i) + '.json', 'wb') as file:
                 pickle.dump(extract_datas, file)
 
@@ -73,6 +75,14 @@ def get_result(filepath, part_name):
     except FileNotFoundError: 
         print(f"File '{filepath}' not found.")
 
+def get_all_odb_files(directory):
+    return [f for f in os.listdir(directory) if f.lower().endswith('.odb')]
 
+if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    odb_files = get_all_odb_files(current_dir)
+    for odb_file in odb_files:
+        print(f"Processing {odb_file}...")
+        get_result(os.path.join(current_dir, odb_file), part_name=None)
 get_result('Grind_0.odb')
 sys.exit()
