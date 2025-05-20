@@ -102,7 +102,7 @@ class Importer():
             print(f"File '{filepath}' not found.")
 
     def from_odb_file(self, filepath, part_name):
-        base_encrypted = subprocess.Popen(["abaqus", "python", "./model/read_odb.py"], 
+        base_encrypted = subprocess.Popen(["abaqus", "python", "./read_odb.py"], 
                                           stdin=subprocess.PIPE, 
                                           stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE,

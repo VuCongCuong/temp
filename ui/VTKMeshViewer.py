@@ -77,6 +77,26 @@ class VTKMeshViewer(QWidget):
         self.renderer.GetActiveCamera().Dolly(0.8)
         self.renderer.ResetCameraClippingRange()
 
+    def draw_vector(self, start, magnitude, color=(1, 0, 0)):
+        """Draw a vector in the VTK viewer.
+        """
+        # Create a line
+        line = vtk.vtkLineSource()
+        line.SetPoint1(start)
+        line.SetPoint2((start[0] + magnitude[0], start[1] + magnitude[1], start[2] + magnitude[2]))
+
+        # Create a mapper
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(line.GetOutputPort())
+
+        # Create an actor
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(color)
+        self.renderer.AddActor(actor)
+        self.vtk_widget.GetRenderWindow().Render()
+
+        
 
     def load_mesh(self, part: Part, base=True):
         

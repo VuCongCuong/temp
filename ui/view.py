@@ -124,6 +124,7 @@ class Window(QMainWindow, Ui_MainWindow):
         
     def generate_grains(self):
         grain_coords = []
+        grain_boundaries = []
         self.matt = JonhsonCook(self.tool_mat.currentText())
         self.matt.load_material_tool(materials[self.tool_mat.currentText()])
         if self.tool_mode.currentText() == "single": 
@@ -135,7 +136,8 @@ class Window(QMainWindow, Ui_MainWindow):
                                      dist_type=self.tool_distrubution.currentText(),
                                      mat = self.matt,
                                      init_depth = self.initial_depth.value()*1000, # millimeters to micrometers
-                                     velocity=self.velocity.value()*10e6, # millimeters to micrometers
+                                     velocity=self.velocity.value()*10e6, # millimeters to micrometers,
+                                     rigid = self.rigid_flexible.isChecked(),
             )
         else:
             # Generate a matrix of grains based on the selected distribution
@@ -153,7 +155,10 @@ class Window(QMainWindow, Ui_MainWindow):
                                       node[2] + trans[1], 
                                       node[3] + trans[2]] for node in grain.nodes]  
             self.vtk_workpiece.load_mesh(grain, False)
-            
+            if self.rigid_flexible.isChecked():
+                for node in grain.set['VEL_NSET']:
+                    self.vtk_workpiece.draw_vector(grain.nodes[int(node-1)][1:], [-200, 0, 0])
+                
     def run_simulation(self):
         """Runs the simulation.
         """
@@ -166,9 +171,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.matw.load_material(materials[self.wp_mat.currentText()])
         self.model.base.assign_material(self.matw)
         
-            
-
-        for step in range(self.num_step.value()):  
+        for step in range(self.num_step.value()):
             self.model.build(step)
             self.model.run() 
     

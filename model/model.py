@@ -1,13 +1,18 @@
 import os
+import sys
+import logging
+import threading
 import subprocess
 import numpy as np
-import logging
 
 from model.importer import Importer
-from model.abaqus_part import BasePart, Grain
+from model.abaqus_part import Grain
 from gcodeparser import GcodeParser
 
 logger = logging.getLogger("main")
+
+
+
 class Model:
     def __init__(self, name='Grind'):
         """Initialize the model class with model name."""
@@ -21,6 +26,7 @@ class Model:
         self.name = None
         self.mat_base = None
         self.wp_mat = None
+        self.tool_rigid = False
         
         self.ntool_sect = 10
         self.grain_storage = dict()
@@ -38,9 +44,10 @@ class Model:
     def import_grains(self, name, vertices, totals=1, size=100,
                        spacing = 1, dist_type=None, mat=None, 
                        init_depth=0, increasing_depth=0,
-                       velocity = 1):
+                       velocity = 1, rigid=False):
         """Import n-abrasive grains to the model."""
         self.abra_vel = velocity
+        self.tool_rigid = rigid
         grain_pos = []
         x = -(size + 100) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
         z = self.base.zrange[1] - init_depth
@@ -74,11 +81,14 @@ class Model:
             grain = Grain(name+str(i), vertices, size) # name, number of vertices
             grain.mat  = mat
             grain.translate = list(grain_pos[i])
-            # grain.generate_mesh(5)
+                
+            if rigid:
+                grain.generate_mesh(5)
+                grain.sel_outer_node_by_dir(1, 0, 0)
+                
             self.grains.append(grain)
             grain_coords.append(grain)
-        
-        logger.info(f"Generate {totals} abrasive seed(s) with {dist_type} distribution.")
+            logger.info(f"Generate abrasive seed {i} with {dist_type} distribution.")
         
         return grain_coords
     
@@ -113,11 +123,25 @@ class Model:
             logger.info(f"{file_path} has been removed successfully.")
         
         # run the simulation by involving abaqus solver
-        # double precision is requirement
-        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=4 gpus=1 scratch=./.temp/ ask_delete=off"
+        # double precision is requirement'
+        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=4 scratch=.temp/ ask_delete=off"
         logger.info(f"Running the simulation with command:\n {cmd_command}")
-        subprocess.run(cmd_command, check=True, shell=True, capture_output=True, text=True)
-        logger.info(f"Simulation {self.name} is completed.")
+        try:
+            # thread = threading.Thread(target=self.run_simulation)
+            # thread.start()
+            abaqus_path = r"C:\SIMULIA\Abaqus\Commands"
+            env = os.environ.copy()
+            env["PATH"] = abaqus_path + os.pathsep + env["PATH"]
+            result = subprocess.run(cmd_command, check=True, shell=True, capture_output=True, text=True, env=env)
+            logger.info(f"Simulation {self.name} is completed.")
+            logger.info(f"Result: {result.stdout}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Simulation failed with return code {e.returncode}")
+            logger.error(f"Command: {e.cmd}")
+            logger.error(f"Stdout: {e.stdout}")
+            logger.error(f"Stderr: {e.stderr}")
+            print(f"Simulation failed. See log for details.\nStderr:\n{e.stderr}")
+            raise
 
     def stop(self):
         """Stop the simulation."""
@@ -252,8 +276,7 @@ class Model:
                 else:
                     file.write(f"*ELEMENT, TYPE=C3D{n-1}T\n")
                 trigger = n
-            file.write("{:<10}, {}\n".format(ele[0], ",".join(map(str, ele[1:]))))
-             
+            file.write("{:<10}, {}\n".format(ele[0], ",".join(map(str, ele[1:]))))  
             
     def _write_list_data(self, file, datas):
         
@@ -318,9 +341,27 @@ class Model:
             self._write_abrasive_elements(file, grain.elements)
             file.write(f"*ELSET, ELSET={grain.name}_ELSET\n")
             self._write_list_data(file, grain.elements) 
+            if  self.tool_rigid:
+                # define the outer elemenet sets
+                for i in range(1, 5):
+                    file.write(f"*ELSET, ELSET=OUTER_SF_S{i}\n") # , internal, instance={grain.name}
+                    self._write_list_data(file, grain.set['OUTER_FACE_S'+str(i)])
+                    file.write(f"*ELSET, ELSET=FONT_S{i}_ELSET\n")
+                    self._write_list_data(file, grain.set[f'FONT_S{i}_ELSET'])
+                    file.write(f"*ELSET, ELSET=BACK_S{i}_ELSET\n")
+                    self._write_list_data(file, grain.set[f'BACK_S{i}_ELSET'])
 
-            file.write(f"*SHELL SECTION, ELSET={grain.name}_ELSET, MATERIAL={grain.mat.name}\n")
-            file.write(f"20, 5\n") # thickness and integration points
+                file.write(f"*ELSET, ELSET={grain.name}_OUTER_ELSET\n")
+                self._write_list_data(file, grain.set['OUTER_FACE']) 
+                file.write(f"*ELSET, ELSET=FONT_ELSET\n")
+                self._write_list_data(file, grain.set['FONT_ELSET'])
+                file.write(f"*ELSET, ELSET=BACK_ELSET\n")
+                self._write_list_data(file, grain.set['BACK_ELSET'])
+                file.write(f"*SOLID SECTION, ELSET={grain.name}_ELSET, MATERIAL={grain.mat.name}\n")
+
+            else:
+                file.write(f"*SHELL SECTION, ELSET={grain.name}_ELSET, MATERIAL={grain.mat.name}\n")
+                file.write(f"20, 5\n") # thickness and integration points
             file.write("*END PART\n")
             
         # write the workpiece
@@ -347,11 +388,16 @@ class Model:
             file.write("*INSTANCE, NAME={}, PART={}\n".format(grain.name, grain.name)) 
             file.write("*NSET, NSET={}_NSET\n".format(grain.name))
             self._write_list_data(file, grain.nodes)
+
+            if self.tool_rigid:
+                file.write(f"*NSET, NSET={grain.name}_VEL_NSET\n")
+                self._write_list_data(file, grain.set['VEL_NSET'])
+
             file.write("*END INSTANCE\n")
         
         # define constrain between node
         file.write(f"*Node\n")
-        file.write("1, -100, 0, 0\n")  # let 1 be the referenece node for tool
+        file.write("1, -200, 100, 400\n")  # let 1 be the referenece node for tool
         file.write("*Nset, nset=SET_VEL\n")
         file.write("1\n")
 
@@ -366,6 +412,7 @@ class Model:
         self.base.select_by_zcoord( type = 'node', 
                                    zrange= [self.base.zrange[1] - 0.2*(self.base.zrange[1]-self.base.zrange[0]), self.base.zrange[1]], 
                                    name = 'CONTACT_NSET')
+        
         self._write_list_data(file, self.base.set['CONTACT_NSET'])
         ## Define node set
         file.write(f"*NSET, NSET=BASE_NSET\n")
@@ -377,14 +424,32 @@ class Model:
             self._write_list_data(file, grain.elements)
 
         for grain in self.grains:
-            file.write(f"*Surface, type=ELEMENT, name=m_Surf_{grain.name}\n")
-            file.write(f"{grain.name}.{grain.name}_ELSET, SNEG\n")
+            
+            if self.tool_rigid:
+                # define the outer elemenet sets
+                file.write(f"*SURFACE, TYPE=ELEMENT, name = m_Surf_{grain.name}\n")
+                for i in range(1, 5):
+                    file.write(f"G0.OUTER_SF_S{str(i)}, S{i}\n")
+                file.write(f"*SURFACE, TYPE=ELEMENT, name = {grain.name}_FONT_SURF\n")
+                for i in range(1, 5):
+                    file.write(f"G0.FONT_S{i}_ELSET, S{i}\n")
+                file.write(f"*SURFACE, TYPE=ELEMENT, name = {grain.name}_BACK_SURF\n")
+                for i in range(1, 5):
+                    file.write(f"G0.BACK_S{i}_ELSET, S{i}\n")
+                    
+            else:
+                file.write(f"*SURFACE, TYPE=ELEMENT, name=m_Surf_{grain.name}\n")
+                file.write(f"{grain.name}.{grain.name}_ELSET, SNEG\n")
         
         file.write("*Surface, type=NODE, name=s_Set_2_CNS_, internal\n")
         file.write("BASE.S_SET_2, 1.\n")
 
         # add constraint
-        file.write(f"*Rigid Body, ref node=SET_VEL, elset=SEED_COLLECT_NSET, isothermal=NO\n")
+        if self.tool_rigid:
+            file.write(f"*MPC\n")
+            file.write("BEAM, G0.G0_VEL_NSET, SET_VEL\n")
+        else:
+            file.write(f"*Rigid Body, ref node=SET_VEL, elset=SEED_COLLECT_NSET, isothermal=NO\n")        
         file.write("*END ASSEMBLY\n")
 
     def _write_element_control(self, file):
@@ -470,7 +535,10 @@ class Model:
         # INTERACTION DEFINITION
         for grain in self.grains:
             file.write(f"*Contact Pair, interaction=INTPROP, mechanical constraint=KINEMATIC, cpset=Int-2\n")
-            file.write(f"m_Surf_{grain.name}, s_Set_2_CNS_\n")
+            if self.tool_rigid:
+                file.write(f"G0_BACK_SURF, s_Set_2_CNS_\n")
+            else:
+                file.write(f"M_SURF_{grain.name}, s_Set_2_CNS_\n")
             
         ## VELOCITY
         file.write(f"*Boundary, type=VELOCITY\n")
