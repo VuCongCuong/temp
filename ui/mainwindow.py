@@ -363,6 +363,7 @@ class Ui_MainWindow(object):
         self.initial_depth = QDoubleSpinBox(self.scrollAreaWidgetContents)
         self.initial_depth.setObjectName(u"initial_depth")
         self.initial_depth.setMinimumSize(QSize(0, 20))
+        self.initial_depth.setMinimum(-100.000000000000000)
 
         self.horizontalLayout_17.addWidget(self.initial_depth)
 

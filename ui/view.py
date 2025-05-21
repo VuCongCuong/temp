@@ -136,7 +136,7 @@ class Window(QMainWindow, Ui_MainWindow):
                                      dist_type=self.tool_distrubution.currentText(),
                                      mat = self.matt,
                                      init_depth = self.initial_depth.value()*1000, # millimeters to micrometers
-                                     velocity=self.velocity.value()*10e6, # millimeters to micrometers,
+                                     velocity=self.velocity.value()*10e5, # millimeters to micrometers,
                                      rigid = self.rigid_flexible.isChecked(),
             )
         else:

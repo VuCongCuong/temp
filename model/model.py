@@ -49,7 +49,7 @@ class Model:
         self.abra_vel = velocity
         self.tool_rigid = rigid
         grain_pos = []
-        x = -(size + 100) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
+        x = -(size + 30) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
         z = self.base.zrange[1] - init_depth
         yoffset = self.base.yrange[1]/2 
 
@@ -504,10 +504,10 @@ class Model:
             
         file.write("*INITIAL CONDITIONS, TYPE=TEMPERATURE\n")
         for grain in self.grains:
-            file.write(f"{grain.name}.{grain.name}_NSET, 20\n")
+            file.write(f"{grain.name}.{grain.name}_NSET, 298\n")
         
         if mode == 0:
-            file.write("BASE.BASE_NSET, 20\n")
+            file.write("BASE.BASE_NSET, 298\n")
        
 
     def _write_interaction(self, file):
@@ -539,6 +539,11 @@ class Model:
                 file.write(f"G0_BACK_SURF, s_Set_2_CNS_\n")
             else:
                 file.write(f"M_SURF_{grain.name}, s_Set_2_CNS_\n")
+
+        file.write(f"*Contact, op=NEW\n")
+        file.write(f"*Contact Inclusions, ALL EXTERIOR\n")
+        file.write(f"*Contact Property Assignment\n")
+        file.write(f" ,  , INTPROP\n")
             
         ## VELOCITY
         file.write(f"*Boundary, type=VELOCITY\n")
