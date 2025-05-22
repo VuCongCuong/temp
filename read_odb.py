@@ -1,6 +1,8 @@
 import sys
 import pickle
 import numpy as np
+import tkinter as tk
+from tkinter import filedialog
 
 import odbAccess
 from abaqusConstants import *
@@ -49,6 +51,15 @@ class UnionFind:
             clusters[root].append(node)
         return list(clusters.values())
     
+def select_odb_file():
+    root = tk.Tk()
+    root.withdraw()
+    file_path = filedialog.askopenfilename(
+        title="Chọn file ODB",
+        initialdir=r"C:\Users\cuong\OneDrive\Desktop\run_simulation",
+        filetypes=[("ODB files", "*.odb")])
+    return file_path
+
 
 def cluster_elements_optimized(elements, status_map, min_cluster_size=100):
     """
@@ -186,16 +197,23 @@ def get_result(filepath):
         global_avg = sum(all_temps) / len(all_temps) if all_temps else None
 
         result = {
-            'max_temp': global_max,
-            'min_temp': global_min,
-            'avg_temp': global_avg,
-            'global_max_wp': global_max_wp,
+            global_max,
+            global_min,
+            global_avg,
+            global_max_wp,
         }
 
-        with open('result_step=' + '.txt', 'w') as file:
+
+        
+        txt_filename = os.path.splitext(os.path.basename(filepath))[0] + '.txt'
+        with open(txt_filename, 'w') as file:
             file.write(str(result))
         odb.close()
         return global_max, global_min, global_avg
+        # with open('result_step=' + '.txt', 'w') as file:
+        #     file.write(str(result))
+        # odb.close()
+        # return global_max, global_min, global_avg
         
     except FileNotFoundError: 
         print(f"File '{filepath}' not found.")
@@ -210,6 +228,7 @@ def get_all_odb_files(directory):
 
 
 if __name__ == "__main__":
+    """
     current_dir = os.getcwd()
     odb_files = get_all_odb_files(current_dir)
     for odb_file in odb_files:
@@ -217,3 +236,12 @@ if __name__ == "__main__":
     get_result('Grind_0.odb')
     sys.exit()
     session.exit()
+    """
+    odb_file = select_odb_file()
+    if odb_file:
+        get_result(odb_file)
+    else:
+        print("Bạn chưa chọn file ODB nào.")
+    sys.exit()
+    session.exit()
+
