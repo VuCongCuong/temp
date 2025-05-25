@@ -51,14 +51,6 @@ class UnionFind:
             clusters[root].append(node)
         return list(clusters.values())
     
-def select_odb_file():
-    root = tk.Tk()
-    root.withdraw()
-    file_path = filedialog.askopenfilename(
-        title="Chọn file ODB",
-        initialdir=r"C:\Users\cuong\OneDrive\Desktop\run_simulation",
-        filetypes=[("ODB files", "*.odb")])
-    return file_path
 
 
 def cluster_elements_optimized(elements, status_map, min_cluster_size=100):
@@ -114,7 +106,7 @@ def cluster_elements_optimized(elements, status_map, min_cluster_size=100):
     return node_clusters, element_clusters
 
 
-
+'''
 def get_result(filepath):
     base_information = []
     
@@ -143,7 +135,7 @@ def get_result(filepath):
             # pls_map     = {value.elementLabel: value.data for value in frame.fieldOutputs['PE'].getSubset(region=instance_1).values}
             # damage_map  = {value.elementLabel: value.data for value in frame.fieldOutputs['PEEQ'].getSubset(region=instance_1).values}
             # coord_map   = {value.nodeLabel: value.data for value in frame.fieldOutputs['COORD'].getSubset(region=instance_1).values}  
-            temp_map_1    = {value.nodeLabel: value.data for value in frame.fieldOutputs['NT11'].getSubset(region=instance_1).values}
+            # temp_map_1    = {value.nodeLabel: value.data for value in frame.fieldOutputs['NT11'].getSubset(region=instance_1).values}
             # vel_map     = {value.nodeLabel: value.data for value in frame.fieldOutputs['V'].getSubset(region=instance_1).values}  
             # acc_map     = {value.nodeLabel: value.data for value in frame.fieldOutputs['A'].getSubset(region=instance_1).values}
             # force_map   = {value.nodeLabel: value.data for value in frame.fieldOutputs['RF'].getSubset(region=instance_1).values}
@@ -187,13 +179,6 @@ def get_result(filepath):
                 all_temps.extend(temp_2)
             
             
-                
-            
-            
-            # Populate extract_datas with relevant results before pickling
-            
-            
-            
         global_avg = sum(all_temps) / len(all_temps) if all_temps else None
 
         result = {
@@ -205,19 +190,122 @@ def get_result(filepath):
 
 
         
-        txt_filename = os.path.splitext(os.path.basename(filepath))[0] + '.txt'
-        with open(txt_filename, 'w') as file:
-            file.write(str(result))
-        odb.close()
-        return global_max, global_min, global_avg
-        # with open('result_step=' + '.txt', 'w') as file:
+        # txt_filename = os.path.splitext(os.path.basename(filepath))[0] + '.txt'
+        # with open(txt_filename, 'w') as file:
         #     file.write(str(result))
         # odb.close()
         # return global_max, global_min, global_avg
+        with open('result_step=Grind.txt', 'w') as file:
+            file.write(str(result))
+        odb.close()
+        return global_max, global_min, global_avg, global_max_wp
         
     except FileNotFoundError: 
         print(f"File '{filepath}' not found.")
         return None, None, None
+'''
+def get_result(filepath, min_cluster_size=100):
+    """
+    Process a single ODB file, clustering nodes of active elements
+    and computing global max, min, avg temperature over the last step.
+    """
+    try:
+        odb = odbAccess.openOdb(filepath)
+        instance_1 = odb.rootAssembly.instances['G0']
+        # instance_2 = odb.rootAssembly.instances['BASE']
+        elements_1 = instance_1.elements
+        # elements_2 = instance_2.elements  # Not used in this function
+
+        # Initialize running statistics
+        global_max = -np.inf
+        global_min = np.inf
+        running_sum = 0.0
+        total_count = 0
+
+        # Select the last step in the model
+        last_step = list(odb.steps.values())[-1]
+
+        # Pre-extract connectivity for each element to avoid repeated API calls
+        element_conns_1 = {ele.label: ele.connectivity for ele in elements_1}
+        # element_conns_2 = {ele.label: ele.connectivity for ele in elements_1}
+
+        # Iterate all frames in the last step
+        for frame in last_step.frames:
+            # Bulk-read STATUS and NT11 once per frame
+            status_vals = frame.fieldOutputs['STATUS'].values
+            nt11_vals   = frame.fieldOutputs['NT11'].values
+
+            # Build a map of elementLabel -> active flag (True if STATUS==1)
+            status_map = {v.elementLabel: bool(v.data) for v in status_vals}
+
+            # Build a numpy array of temperatures indexed by nodeLabel
+            max_node = max(v.nodeLabel for v in nt11_vals)
+            temps = np.full(max_node + 1, np.nan)
+            for v in nt11_vals:
+                temps[v.nodeLabel] = v.data
+
+            # Filter only active elements
+            active_elements = [ele for ele in elements_1 if status_map.get(ele.label, False)]
+
+            # Union-Find clustering on active nodes
+            uf = UnionFind()
+            for ele in active_elements:
+                conn = element_conns_1[ele.label]
+                # Use the first node as representative
+                rep = conn[0]
+                uf.add(rep)
+                for node in conn:
+                    uf.add(node)
+                    uf.union(rep, node)
+
+            # Collect clusters of nodes
+            clusters = {}
+            for node in uf.parent:
+                root = uf.find(node)
+                clusters.setdefault(root, set()).add(node)
+
+            # Filter clusters by size
+            valid_clusters = [nodes for nodes in clusters.values()
+                               if len(nodes) >= min_cluster_size]
+            if not valid_clusters:
+                continue
+
+            # Analyze the first valid cluster
+            cluster_nodes = list(valid_clusters[0])
+            arr = temps[cluster_nodes]
+
+            # Update frame-based and running statistics
+            current_max = np.nanmax(arr)
+            current_min = np.nanmin(arr)
+            frame_sum   = np.nansum(arr)
+            count       = np.count_nonzero(~np.isnan(arr))
+
+            global_max = max(global_max, current_max)
+            global_min = min(global_min, current_min)
+            running_sum += frame_sum
+            total_count += count
+
+        # Final average temperature over all valid nodes & frames
+        global_avg = running_sum / total_count if total_count > 0 else float('nan')
+
+        # Write out results
+        result = {
+            'max': float(global_max),
+            'min': float(global_min),
+            'avg': float(global_avg)
+        }
+
+
+        out_file = f"result_{os.path.basename(filepath)}.txt"
+        with open(out_file, 'w') as f:
+            f.write(str(result))
+
+        odb.close()
+        return result
+
+    except Exception as e:
+        print(f"Error processing {filepath}: {e}")
+        return None
 
 
 
@@ -226,22 +314,28 @@ def get_all_odb_files(directory):
 
 
 
-
-if __name__ == "__main__":
-    """
-    current_dir = os.getcwd()
-    odb_files = get_all_odb_files(current_dir)
+if __name__ == '__main__':
+    cwd = os.getcwd()
+    odb_files = get_all_odb_files(cwd)
     for odb_file in odb_files:
-        get_result(os.path.join(current_dir, odb_file))
-    get_result('Grind_0.odb')
+        res = get_result(os.path.join(cwd, odb_file))
+        print(f"Processed {odb_file}: {res}")
     sys.exit()
     session.exit()
-    """
-    odb_file = select_odb_file()
-    if odb_file:
-        get_result(odb_file)
-    else:
-        print("Bạn chưa chọn file ODB nào.")
-    sys.exit()
-    session.exit()
-
+# if __name__ == "__main__":
+    
+#     current_dir = os.getcwd()
+#     odb_files = get_all_odb_files(current_dir)
+#     for odb_file in odb_files:
+#         get_result(os.path.join(current_dir, odb_file))
+#     get_result('Grind_1.odb')
+#     sys.exit()
+#     session.exit()
+    
+    # odb_file = select_odb_file()
+    # if odb_file:
+    #     get_result(odb_file)
+    # else:
+    #     print("Bạn chưa chọn file ODB nào.")
+    # sys.exit()
+    # session.exit()
