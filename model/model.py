@@ -43,8 +43,8 @@ class Model:
     
     def import_grains(self, name, vertices, totals=1, size=100,
                        spacing = 1, dist_type=None, mat=None, 
-                       init_depth=0, increasing_depth=0,
-                       velocity = 1, rigid=False):
+                       init_depth=0, inc_depth=0,
+                       velocity = 1, rigid=False, seed_shape=False):
         """Import n-abrasive grains to the model."""
         self.abra_vel = velocity
         self.tool_rigid = rigid
@@ -74,14 +74,25 @@ class Model:
                 for i in range(int(totals)):
                     y = yoffset + (i-totals/2) * spacing
                     grain_pos.append((x, y, z))
+
         
         grain_coords = []
         self.grains = [] # reset abrasive grains collection
         for i in range(totals):
-            grain = Grain(name+str(i), vertices, size) # name, number of vertices
+            grain = Grain(name+str(i), size)
             grain.mat  = mat
             grain.translate = list(grain_pos[i])
-                
+
+            if seed_shape == 'sphere':
+                grain.generate_sphere_mesh(radius)
+            elif seed_shape == 'pyramid':
+                grain.generate_pyramid_mesh()
+            elif seed_shape == 'cylinder':
+                grain.generate_cylinder_mesh(vertices, size)
+            else:
+                grain.generate_random_mesh(vertices, size, spacing)
+        
+            
             if rigid:
                 grain.generate_mesh(5)
                 grain.sel_outer_node_by_dir(1, 0, 0)
@@ -520,6 +531,7 @@ class Model:
         file.write(f"*Surface Behavior, pressure-overclosure=HARD\n")
         file.write(f"*Gap Heat Generation\n")
         file.write(f"1., 0.5\n")
+        
     
     def _write_step(self, file):
         """Write the step to the input file."""
@@ -531,13 +543,15 @@ class Model:
         file.write(f", 2.2e-5\n")
         
         # INTERACTION DEFINITION
+        file.write(f"** INTERACTION\n")
         for grain in self.grains:
             file.write(f"*Contact Pair, interaction=INTPROP, mechanical constraint=KINEMATIC, cpset=Int-2\n")
             if self.tool_rigid:
-                file.write(f"G0_BACK_SURF, s_Set_2_CNS_\n")
+                file.write(f"m_Surf_G0, s_Set_2_CNS_\n")
             else:
                 file.write(f"M_SURF_{grain.name}, s_Set_2_CNS_\n")
-            
+        file.write("*Contact, op=NEW\n")
+        file.write("*Contact Inclusions, ALL EXTERIOR\n")
         ## VELOCITY
         file.write(f"*Boundary, type=VELOCITY\n")
         file.write(f"SET_VEL, 1, 1, {self.abra_vel}\n")

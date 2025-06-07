@@ -46,7 +46,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.matw = None
         self.matt = None
         
-        
         self.tool_center = (0, 0, 0)
 
         self.setupUi(self)
@@ -85,6 +84,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tool_type.addItems(tool_shapes)
         self.tool_distrubution.addItems(grain_distributions)
         self.tool_mode.addItems(tool_mode)
+        self.abrasive_shape.addItems(abrasive_shapes)
 
     def connectSignalsSlots(self):
         """Connects UI elements (buttons, menus) to corresponding functions.
@@ -136,8 +136,9 @@ class Window(QMainWindow, Ui_MainWindow):
                                      dist_type=self.tool_distrubution.currentText(),
                                      mat = self.matt,
                                      init_depth = self.initial_depth.value()*1000, # millimeters to micrometers
-                                     velocity=self.velocity.value()*10e6, # millimeters to micrometers,
+                                     velocity=self.velocity.value()*1e6, # millimeters to micrometers,
                                      rigid = self.rigid_flexible.isChecked(),
+                                     seed_shape = self.abrasive_shape.currentText()
             )
         else:
             # Generate a matrix of grains based on the selected distribution
@@ -158,7 +159,9 @@ class Window(QMainWindow, Ui_MainWindow):
             if self.rigid_flexible.isChecked():
                 for node in grain.set['VEL_NSET']:
                     self.vtk_workpiece.draw_vector(grain.nodes[int(node-1)][1:], [-200, 0, 0])
-                
+            elif self.Sphere.isChecked():
+                for node in grain.set['VEL_NSET']:
+                    self.vtk_workpiece.draw_vector(grain.nodes[int(node-1)][1:], [-200, 0, 0])   
     def run_simulation(self):
         """Runs the simulation.
         """

@@ -107,17 +107,17 @@ class BasePart(Part):
 
 
 class Grain(Part):
-    def __init__(self, name, num_vertices, size):
+    def __init__(self, name, size):
         super().__init__(name)
         self.size = size
-        self.gen_convex_hull_grain(num_vertices)
         self.translate = [0, 0, 0]
-        
         self.node_neighbor = {}
         self.prj_pts = []
 
-    def gen_rand_translate(self, xrange, yrange, zrange):
         
+
+    def gen_rand_translate(self, xrange, yrange, zrange):
+
         x = uniform.rvs(loc=xrange[0], scale=xrange[1]-xrange[0])
         y = yrange[0] + 0.5 * (yrange[1] - yrange[0])
         # scale z range 20 % on top
@@ -125,6 +125,68 @@ class Grain(Part):
         z = uniform.rvs(loc=zrange[0], scale=zrange[1]-zrange[0])
         z = zrange[1]   # some testings
         self.translate = [x, y, z]       
+        
+    def gen_uniform_sphere_mesh(self, n_theta=20, n_phi=10):
+        """
+        Generate a uniform sphere mesh (nodes and triangular faces).
+        n_theta: number of divisions along azimuthal angle (longitude)
+        n_phi: number of divisions along polar angle (latitude)
+        """
+        # Generate nodes
+        nodes = []
+        node_map = {}  # (i, j) -> node_id
+        node_id = 1
+        for i in range(n_phi + 1):
+            phi = np.pi * i / n_phi
+            for j in range(n_theta):
+                theta = 2 * np.pi * j / n_theta
+                x = self.size * np.sin(phi) * np.cos(theta)
+                y = self.size * np.sin(phi) * np.sin(theta)
+                z = self.size * np.cos(phi)
+                nodes.append([node_id, x, y, z])
+                node_map[(i, j)] = node_id
+                node_id += 1
+
+        # Generate elements (triangles)
+        elements = []
+        elem_id = 1
+        points = np.array([node[1:] for node in nodes])
+        center = np.mean(points, axis=0)
+
+        for i in range(n_phi):
+            for j in range(n_theta):
+                jp = (j + 1) % n_theta
+                if i != 0:
+                    # Lower triangle
+                    n1 = node_map[(i, j)]
+                    n2 = node_map[(i, jp)]
+                    n3 = node_map[(i - 1, j)]
+                    # Check normal direction
+                    v0, v1, v2 = points[n1-1], points[n2-1], points[n3-1]
+                    normal = np.cross(v1 - v0, v2 - v0)
+                    normal = normal / np.linalg.norm(normal)
+                    mid_pt = np.mean([v0, v1, v2], axis=0)
+                    if np.dot(mid_pt - center, normal) < 0:
+                        n1, n3 = n3, n1  # Swap to ensure outward normal
+                    elements.append([elem_id, n1, n2, n3])
+                    elem_id += 1
+                if i != n_phi - 1:
+                    # Upper triangle
+                    n1 = node_map[(i, jp)]
+                    n2 = node_map[(i + 1, jp)]
+                    n3 = node_map[(i, j)]
+                    v0, v1, v2 = points[n1-1], points[n2-1], points[n3-1]
+                    normal = np.cross(v1 - v0, v2 - v0)
+                    normal = normal / np.linalg.norm(normal)
+                    mid_pt = np.mean([v0, v1, v2], axis=0)
+                    if np.dot(mid_pt - center, normal) < 0:
+                        n1, n3 = n3, n1
+                    elements.append([elem_id, n1, n2, n3])
+                    elem_id += 1
+
+        self.nodes = nodes
+        self.elements = elements
+        print(f"Generated uniform sphere mesh: {len(nodes)} nodes, {len(elements)} elements")
         
     def _gen_rand_spherical_points(self, num_points):
         rng = np.random.default_rng()
@@ -399,10 +461,6 @@ class Grain(Part):
             tmp = [node+1 for node in clusters[1]]
             self.create_set("VEL_NSET", tmp)
             return clusters[1] 
-        
-        
-
-
     
     def _find_hull_boundary(self, current, pt_start, pt_end, visited, start):
         potential = {}

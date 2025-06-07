@@ -53,7 +53,6 @@ def get_result(filepath, part_name):
                         for conn in connectivity:
                             list_of_active_node.append(conn)
 
-            
             list_of_active_node = sorted(set(list_of_active_node))
             list_of_element = sorted(list_of_element)
             
@@ -84,5 +83,6 @@ if __name__ == "__main__":
     for odb_file in odb_files:
         print(f"Processing {odb_file}...")
         get_result(os.path.join(current_dir, odb_file), part_name=None)
+    
 get_result('Grind_0.odb')
 sys.exit()

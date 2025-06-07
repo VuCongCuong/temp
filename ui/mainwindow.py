@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindowxlwsEe.ui'
+## Form generated from reading UI file 'mainwindowaMQnBg.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, -324, 192, 724))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, -157, 192, 752))
         self.scrollAreaWidgetContents.setMinimumSize(QSize(192, 0))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -196,6 +196,12 @@ class Ui_MainWindow(object):
         self.tool_mat.setMinimumSize(QSize(0, 22))
 
         self.verticalLayout.addWidget(self.tool_mat)
+
+        self.abrasive_shape = QComboBox(self.scrollAreaWidgetContents)
+        self.abrasive_shape.setObjectName(u"abrasive_shape")
+        self.abrasive_shape.setMinimumSize(QSize(0, 22))
+
+        self.verticalLayout.addWidget(self.abrasive_shape)
 
         self.label_16 = QLabel(self.scrollAreaWidgetContents)
         self.label_16.setObjectName(u"label_16")
