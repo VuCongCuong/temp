@@ -244,7 +244,7 @@ class Ui_MainWindow(object):
         self.num_step.setObjectName(u"num_step")
         self.num_step.setMinimumSize(QSize(0, 20))
         self.num_step.setMaximum(1000)
-        self.num_step.setValue(10)
+        self.num_step.setValue(1)
 
         self.horizontalLayout_11.addWidget(self.num_step)
 

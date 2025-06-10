@@ -85,13 +85,15 @@ class Model:
             
             if seed_shape == 'sphere':
                 grain.gen_uniform_sphere_mesh()
+            elif seed_shape == 'octahedron':
+                grain.gen_octahedron_mesh()
             elif seed_shape == 'combined':
                 grain.gen_combined_mesh()
             elif seed_shape == 'random':
                 grain.gen_convex_hull_grain(vertices)
 
             if rigid:
-                grain.generate_mesh(20)
+                grain.generate_mesh(5)
                 grain.sel_outer_node_by_dir(1, 0, 0)
                 
             self.grains.append(grain)

@@ -8,7 +8,7 @@ def create_substracted_mesh():
     cube.apply_translation([2, 2, 2])
 
     # Tạo tứ diện đều
-    b = 1
+    b = 1.5
     tetra_vertices = np.array([
         [0, 0, 0],
         [b, 0, 0],

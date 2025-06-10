@@ -131,7 +131,37 @@ class Grain(Part):
 
 
 
-
+    def gen_octahedron_mesh(self):
+        """
+        Sinh mesh bát diện đều (regular octahedron) với bán kính self.size.
+        """
+        # Tọa độ 6 đỉnh bát diện đều tâm tại gốc
+        a = self.size
+        points = np.array([
+            [ a,  0,  0],
+            [-a,  0,  0],
+            [ 0,  a,  0],
+            [ 0, -a,  0],
+            [ 0,  0,  a],
+            [ 0,  0, -a]
+        ])
+        # Các mặt tam giác (chỉ số bắt đầu từ 0)
+        faces = [
+            [0, 2, 4],
+            [2, 1, 4],
+            [1, 3, 4],
+            [3, 0, 4],
+            [0, 5, 2],
+            [2, 5, 1],
+            [1, 5, 3],
+            [3, 5, 0]
+        ]
+        # Tạo nodes và elements giống các hàm mesh khác
+        nodes = [[i+1] + list(pt) for i, pt in enumerate(points)]
+        elements = [[i+1] + [v+1 for v in face] for i, face in enumerate(faces)]
+        self.nodes = nodes
+        self.elements = elements
+        print(f"Generated regular octahedron mesh: {len(nodes)} nodes, {len(elements)} elements")
 
 
     def gen_combined_mesh(self):
@@ -179,7 +209,20 @@ class Grain(Part):
             substracted = substracted.subdivide()
             trimesh.smoothing.filter_laplacian(substracted, lamb=0.5, iterations=10)
             print("Remeshed. Is watertight:", substracted.is_watertight)
+    
 
+        # Kiểm tra độ dày của mesh
+        points = substracted.vertices
+        min_coords = points.min(axis=0)
+        max_coords = points.max(axis=0)
+        thickness = np.min(max_coords - min_coords)  # Độ dày nhỏ nhất theo 3 trục
+
+        min_thickness = 0.2 * self.size  # Ngưỡng tối thiểu, bạn có thể điều chỉnh
+        if thickness < min_thickness:
+            print(f"Mesh quá mỏng (thickness={thickness:.3f}), loại bỏ mesh này.")
+            self.nodes = []
+            self.elements = []
+            return None
         scale_factor = 1.0
         substracted.apply_scale(scale_factor)  # Scale the mesh to the desired size
 
@@ -198,7 +241,7 @@ class Grain(Part):
 
 
         
-    def gen_uniform_sphere_mesh(self, n_theta=20, n_phi=10):
+    def gen_uniform_sphere_mesh(self, n_theta=20, n_phi=10, scale=0.7):
         """
         Generate a uniform sphere mesh (nodes and triangular faces).
         n_theta: number of divisions along azimuthal angle (longitude)
@@ -210,7 +253,7 @@ class Grain(Part):
         node_id = 1
 
         # North pole
-        nodes.append([node_id, 0.0, 0.0, self.size])
+        nodes.append([node_id, 0.0, 0.0, self.size * scale])
         north_pole_id = node_id
         node_id += 1
 
@@ -227,7 +270,7 @@ class Grain(Part):
                 node_id += 1
 
         # South pole
-        nodes.append([node_id, 0.0, 0.0, -self.size])
+        nodes.append([node_id, 0.0, 0.0, -self.size * scale])
         south_pole_id = node_id
 
         # Generate elements (triangles)
@@ -440,6 +483,12 @@ class Grain(Part):
         if y == z == 0: index = [1, 2]
         elif x == z == 0: index == [0, 2]
         elif z == y == 0: index == [0, 1]
+
+        # if self.prj_pts is None or len(self.prj_pts) == 0:
+        #     print("Warning: Không có điểm nào để tạo ConvexHull trong sel_outer_node_by_dir.")
+        #     return None
+        # if self.prj_pts.ndim == 1:
+        #     self.prj_pts = self.prj_pts.reshape(-1, 1)
         
         hull = ConvexHull(self.prj_pts[:, index])  # Use all projected points to construct the convex hull
         simplices = hull.simplices.tolist()
