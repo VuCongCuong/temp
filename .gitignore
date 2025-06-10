@@ -2,7 +2,7 @@
 *.rpy
 *.rpy.*
 Grind_*
-
+*.pyc
 # Ignore virtual environment files
 .venv/
 

@@ -4,6 +4,9 @@ import numpy as np
 import pyvista as pv
 from matplotlib import cm
 
+import trimesh
+import numpy as np
+import trimesh.smoothing
 
 from scipy.stats import uniform
 from scipy.spatial import ConvexHull
@@ -107,17 +110,16 @@ class BasePart(Part):
 
 
 class Grain(Part):
-    def __init__(self, name, num_vertices, size):
+    def __init__(self, name, size):
         super().__init__(name)
         self.size = size
-        self.gen_convex_hull_grain(num_vertices)
         self.translate = [0, 0, 0]
-        
         self.node_neighbor = {}
         self.prj_pts = []
+        
 
     def gen_rand_translate(self, xrange, yrange, zrange):
-        
+
         x = uniform.rvs(loc=xrange[0], scale=xrange[1]-xrange[0])
         y = yrange[0] + 0.5 * (yrange[1] - yrange[0])
         # scale z range 20 % on top
@@ -125,6 +127,149 @@ class Grain(Part):
         z = uniform.rvs(loc=zrange[0], scale=zrange[1]-zrange[0])
         z = zrange[1]   # some testings
         self.translate = [x, y, z]       
+
+
+
+
+
+
+
+    def gen_combined_mesh(self):
+        # Calculate sizes so that the circumscribed radius ≈ self.size
+        cube_size = 2 * self.size / np.sqrt(3)
+        tetra_size = 4 * self.size / np.sqrt(6)
+        octa_size = self.size * np.sqrt(2)
+
+        # Create cube
+        cube = trimesh.creation.box(extents=[cube_size, cube_size, cube_size])
+        cube.apply_translation([0, 0, 0])
+
+        # Create regular tetrahedron
+        tetra_vertices = np.array([
+            [0, 0, 0],
+            [tetra_size, 0, 0],
+            [tetra_size/2, tetra_size*np.sqrt(3)/2, 0],
+            [tetra_size/2, tetra_size*np.sqrt(3)/6, tetra_size*np.sqrt(6)/3]
+        ])
+        tetra = trimesh.convex.convex_hull(tetra_vertices)
+        tetra.apply_translation(-tetra.center_mass)
+
+        # Create regular octahedron
+        octa_vertices = np.array([
+            [octa_size/2, 0, 0],
+            [-octa_size/2, 0, 0],
+            [0, octa_size/2, 0],
+            [0, -octa_size/2, 0],
+            [0, 0, octa_size/2],
+            [0, 0, -octa_size/2]
+        ])
+        octa = trimesh.convex.convex_hull(octa_vertices)
+        octa.apply_translation(-octa.center_mass)
+
+        # Perform intersection
+        substracted = trimesh.boolean.intersection([cube, tetra, octa], engine='blender')
+        substracted.remove_duplicate_faces()
+        substracted.remove_degenerate_faces()
+        substracted.remove_unreferenced_vertices()
+        substracted = substracted.process(validate=True)
+        # substracted = substracted.subdivide()
+        print("Is watertight:", substracted.is_watertight)
+
+        if not substracted.is_watertight or len(substracted.faces) < 50:
+            substracted = substracted.subdivide()
+            trimesh.smoothing.filter_laplacian(substracted, lamb=0.5, iterations=10)
+            print("Remeshed. Is watertight:", substracted.is_watertight)
+
+        scale_factor = 1.0
+        substracted.apply_scale(scale_factor)  # Scale the mesh to the desired size
+
+        # Extract vertices and faces from the resulting mesh
+        points = substracted.vertices
+        faces = substracted.faces
+
+        # Create nodes and elements
+        nodes = [[i+1] + list(pt) for i, pt in enumerate(points)]
+        elements = [[i+1] + [v+1 for v in face] for i, face in enumerate(faces)]
+
+        self.nodes = nodes
+        self.elements = elements
+        return substracted
+
+
+
+        
+    def gen_uniform_sphere_mesh(self, n_theta=20, n_phi=10):
+        """
+        Generate a uniform sphere mesh (nodes and triangular faces).
+        n_theta: number of divisions along azimuthal angle (longitude)
+        n_phi: number of divisions along polar angle (latitude)
+        """
+        # Generate nodes
+        nodes = []
+        node_map = {}  # (i, j) -> node_id
+        node_id = 1
+
+        # North pole
+        nodes.append([node_id, 0.0, 0.0, self.size])
+        north_pole_id = node_id
+        node_id += 1
+
+        # Middle nodes
+        for i in range(1, n_phi):
+            phi = np.pi * i / n_phi
+            for j in range(n_theta):
+                theta = 2 * np.pi * j / n_theta
+                x = self.size * np.sin(phi) * np.cos(theta)
+                y = self.size * np.sin(phi) * np.sin(theta)
+                z = self.size * np.cos(phi)
+                nodes.append([node_id, x, y, z])
+                node_map[(i, j)] = node_id
+                node_id += 1
+
+        # South pole
+        nodes.append([node_id, 0.0, 0.0, -self.size])
+        south_pole_id = node_id
+
+        # Generate elements (triangles)
+        elements = []
+        elem_id = 1
+        points = np.array([node[1:] for node in nodes])
+        center = np.mean(points, axis=0)
+
+        # Top cap
+        for j in range(n_theta):
+            jp = (j + 1) % n_theta
+            n2 = node_map[(1, j)]
+            n3 = node_map[(1, jp)]
+            elements.append([elem_id, north_pole_id, n2, n3])
+            elem_id += 1
+
+        # Middle bands
+        for i in range(1, n_phi - 1):
+            for j in range(n_theta):
+                jp = (j + 1) % n_theta
+                n1 = node_map[(i, j)]
+                n2 = node_map[(i, jp)]
+                n3 = node_map[(i + 1, j)]
+                n4 = node_map[(i + 1, jp)]
+                # First triangle
+                elements.append([elem_id, n1, n2, n3])
+                elem_id += 1
+                # Second triangle
+                elements.append([elem_id, n2, n4, n3])
+                elem_id += 1
+
+        # Bottom cap
+        for j in range(n_theta):
+            jp = (j + 1) % n_theta
+            n2 = node_map[(n_phi - 1, jp)]
+            n3 = node_map[(n_phi - 1, j)]
+            elements.append([elem_id, south_pole_id, n2, n3])
+            elem_id += 1
+
+        self.nodes = nodes
+        self.elements = elements
+        print(f"Generated uniform sphere mesh: {len(nodes)} nodes, {len(elements)} elements")
         
     def _gen_rand_spherical_points(self, num_points):
         rng = np.random.default_rng()
@@ -217,7 +362,7 @@ class Grain(Part):
         bounding_box_diagonal = ((xmax - xmin)**2 + (ymax - ymin)**2 + (zmax - zmin)**2)**0.5
 
         # Set mesh size as a proportion of the bounding box diagonal
-        proportion = 0.05  # Adjust this proportion as needed
+        proportion = 0.04  # Adjust this proportion as needed
         mesh_size = bounding_box_diagonal * proportion
 
         gmsh.option.setNumber("Mesh.CharacteristicLengthMin", mesh_size)
@@ -399,10 +544,6 @@ class Grain(Part):
             tmp = [node+1 for node in clusters[1]]
             self.create_set("VEL_NSET", tmp)
             return clusters[1] 
-        
-        
-
-
     
     def _find_hull_boundary(self, current, pt_start, pt_end, visited, start):
         potential = {}

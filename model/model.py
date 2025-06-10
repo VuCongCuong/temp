@@ -43,13 +43,13 @@ class Model:
     
     def import_grains(self, name, vertices, totals=1, size=100,
                        spacing = 1, dist_type=None, mat=None, 
-                       init_depth=0, increasing_depth=0,
-                       velocity = 1, rigid=False):
+                       init_depth=0, inc_depth=0,
+                       velocity = 1, rigid=False, seed_shape=None):
         """Import n-abrasive grains to the model."""
         self.abra_vel = velocity
         self.tool_rigid = rigid
         grain_pos = []
-        x = -(size + 30) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
+        x = -(size + 100) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
         z = self.base.zrange[1] - init_depth
         yoffset = self.base.yrange[1]/2 
 
@@ -74,16 +74,24 @@ class Model:
                 for i in range(int(totals)):
                     y = yoffset + (i-totals/2) * spacing
                     grain_pos.append((x, y, z))
+
         
         grain_coords = []
         self.grains = [] # reset abrasive grains collection
         for i in range(totals):
-            grain = Grain(name+str(i), vertices, size) # name, number of vertices
+            grain = Grain(name+str(i), size)
             grain.mat  = mat
             grain.translate = list(grain_pos[i])
-                
+            
+            if seed_shape == 'sphere':
+                grain.gen_uniform_sphere_mesh()
+            elif seed_shape == 'combined':
+                grain.gen_combined_mesh()
+            elif seed_shape == 'random':
+                grain.gen_convex_hull_grain(vertices)
+
             if rigid:
-                grain.generate_mesh(5)
+                grain.generate_mesh(20)
                 grain.sel_outer_node_by_dir(1, 0, 0)
                 
             self.grains.append(grain)
@@ -124,11 +132,9 @@ class Model:
         
         # run the simulation by involving abaqus solver
         # double precision is requirement'
-        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=4 scratch=.temp/ ask_delete=off"
+        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=6 scratch=.temp/ ask_delete=off"
         logger.info(f"Running the simulation with command:\n {cmd_command}")
         try:
-            # thread = threading.Thread(target=self.run_simulation)
-            # thread.start()
             abaqus_path = r"C:\SIMULIA\Abaqus\Commands"
             env = os.environ.copy()
             env["PATH"] = abaqus_path + os.pathsep + env["PATH"]
@@ -235,7 +241,7 @@ class Model:
             with open('.run/'+file_path+'.inp', 'w') as file:
                 file.write("!Grinding simulation process, Author: Vu Hoai Lam\n")
                 file.write("!Email: Lam.VH205731@sis.hust.edu.vn\n")
-                file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=0.0\n")
+                file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=-273.5\n")
                 mats = [self.base.mat.name]
                 mat_lists = [self.base.mat]
                 for grain in self.grains:
@@ -504,10 +510,10 @@ class Model:
             
         file.write("*INITIAL CONDITIONS, TYPE=TEMPERATURE\n")
         for grain in self.grains:
-            file.write(f"{grain.name}.{grain.name}_NSET, 298\n")
+            file.write(f"{grain.name}.{grain.name}_NSET, 20\n")
         
         if mode == 0:
-            file.write("BASE.BASE_NSET, 298\n")
+            file.write("BASE.BASE_NSET, 20\n")
        
 
     def _write_interaction(self, file):
@@ -522,6 +528,7 @@ class Model:
         file.write(f"*Surface Behavior, pressure-overclosure=HARD\n")
         file.write(f"*Gap Heat Generation\n")
         file.write(f"1., 0.5\n")
+        
     
     def _write_step(self, file):
         """Write the step to the input file."""
@@ -533,18 +540,15 @@ class Model:
         file.write(f", 2.2e-5\n")
         
         # INTERACTION DEFINITION
+        file.write(f"** INTERACTION\n")
         for grain in self.grains:
             file.write(f"*Contact Pair, interaction=INTPROP, mechanical constraint=KINEMATIC, cpset=Int-2\n")
             if self.tool_rigid:
-                file.write(f"G0_BACK_SURF, s_Set_2_CNS_\n")
+                file.write(f"m_Surf_G0, s_Set_2_CNS_\n")
             else:
                 file.write(f"M_SURF_{grain.name}, s_Set_2_CNS_\n")
-
-        file.write(f"*Contact, op=NEW\n")
-        file.write(f"*Contact Inclusions, ALL EXTERIOR\n")
-        file.write(f"*Contact Property Assignment\n")
-        file.write(f" ,  , INTPROP\n")
-            
+        file.write("*Contact, op=NEW\n")
+        file.write("*Contact Inclusions, ALL EXTERIOR\n")
         ## VELOCITY
         file.write(f"*Boundary, type=VELOCITY\n")
         file.write(f"SET_VEL, 1, 1, {self.abra_vel}\n")
