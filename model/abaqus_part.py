@@ -7,6 +7,7 @@ from matplotlib import cm
 import trimesh
 import numpy as np
 import trimesh.smoothing
+from trimesh.transformations import rotation_matrix
 
 from scipy.stats import uniform
 from scipy.spatial import ConvexHull
@@ -163,6 +164,46 @@ class Grain(Part):
         self.elements = elements
         print(f"Generated regular octahedron mesh: {len(nodes)} nodes, {len(elements)} elements")
 
+    def gen_cube_mesh(self):
+        """
+        Sinh mesh hình lập phương (cube) với cạnh có độ dài self.size.
+        """
+        # Tạo hình lập phương với cạnh = self.size
+        cube = trimesh.creation.box(extents=[self.size, self.size, self.size])
+        cube.apply_translation([0, 0, 0])  
+
+        nodes = [[i+1] + list(pt) for i, pt in enumerate(cube.vertices)]
+        elements = [[i+1] + [v+1 for v in face] for i, face in enumerate(cube.faces)]
+        self.nodes = nodes
+        self.elements = elements
+        print(f"Generated cube mesh: {len(nodes)} nodes, {len(elements)} elements")
+
+
+    def get_intersection_points(mesh1, mesh2, tol=1e-6):
+        """
+        Trả về các điểm nằm trên giao tuyến giữa hai mesh (giao bề mặt).
+        mesh1, mesh2: trimesh.Trimesh
+        tol: ngưỡng khoảng cách để coi là giao nhau
+        """
+        # Lấy tất cả các đỉnh của mesh1 và mesh2
+        verts1 = mesh1.vertices
+        verts2 = mesh2.vertices
+
+        # Tìm các đỉnh của mesh1 nằm trên bề mặt mesh2
+        is_on_surface2 = mesh2.contains(verts1)
+        intersection_points1 = verts1[is_on_surface2]
+
+        # Tìm các đỉnh của mesh2 nằm trên bề mặt mesh1
+        is_on_surface1 = mesh1.contains(verts2)
+        intersection_points2 = verts2[is_on_surface1]
+
+        # Gộp lại và loại bỏ trùng lặp
+        all_points = np.vstack([intersection_points1, intersection_points2])
+        # Loại bỏ các điểm trùng nhau (theo tol)
+        unique_points = trimesh.points.merge_vertices(all_points, radius=tol)
+        return unique_points
+
+
 
     def gen_combined_mesh(self):
         # Calculate sizes so that the circumscribed radius ≈ self.size
@@ -240,8 +281,7 @@ class Grain(Part):
 
 
 
-        
-    def gen_uniform_sphere_mesh(self, n_theta=20, n_phi=10, scale=0.7):
+    def gen_uniform_sphere_mesh(self, n_theta = 20, n_phi = 10, scale = 0.7):
         """
         Generate a uniform sphere mesh (nodes and triangular faces).
         n_theta: number of divisions along azimuthal angle (longitude)
@@ -262,9 +302,9 @@ class Grain(Part):
             phi = np.pi * i / n_phi
             for j in range(n_theta):
                 theta = 2 * np.pi * j / n_theta
-                x = self.size * np.sin(phi) * np.cos(theta)
-                y = self.size * np.sin(phi) * np.sin(theta)
-                z = self.size * np.cos(phi)
+                x = self.size * scale * np.sin(phi) * np.cos(theta)  # <-- thêm scale ở đây
+                y = self.size * scale * np.sin(phi) * np.sin(theta)
+                z = self.size * scale * np.cos(phi)
                 nodes.append([node_id, x, y, z])
                 node_map[(i, j)] = node_id
                 node_id += 1
@@ -277,7 +317,7 @@ class Grain(Part):
         elements = []
         elem_id = 1
         points = np.array([node[1:] for node in nodes])
-        center = np.mean(points, axis=0)
+        # center = np.mean(points, axis=0)
 
         # Top cap
         for j in range(n_theta):
@@ -313,7 +353,57 @@ class Grain(Part):
         self.nodes = nodes
         self.elements = elements
         print(f"Generated uniform sphere mesh: {len(nodes)} nodes, {len(elements)} elements")
-        
+
+
+    def gen_dodecahedron_mesh(self):
+        """
+        Generate mesh of a regular dodecahedron with circumradius self.size.
+        Triangulates faces via ConvexHull.
+        """
+        phi = (1.0 + np.sqrt(5.0)) / 2.0
+        # Define 20 vertices of a regular dodecahedron
+        points = np.array([
+            [ 1,  1,  1], [ 1,  1, -1], [ 1, -1,  1], [ 1, -1, -1],
+            [-1,  1,  1], [-1,  1, -1], [-1, -1,  1], [-1, -1, -1],
+            [ 0,  1/phi,  phi], [ 0,  1/phi, -phi], [ 0, -1/phi,  phi], [ 0, -1/phi, -phi],
+            [ 1/phi,  phi, 0], [ 1/phi, -phi, 0], [-1/phi,  phi, 0], [-1/phi, -phi, 0],
+            [ phi, 0,  1/phi], [ phi, 0, -1/phi], [-phi, 0,  1/phi], [-phi, 0, -1/phi]
+        ]) * self.size
+        # Compute convex hull to triangulate faces
+        hull = ConvexHull(points)
+        faces = hull.simplices
+        # Assign nodes and triangular face elements
+        self.nodes = [[i+1] + list(pt) for i, pt in enumerate(points)]
+        self.elements = [[i+1] + [(idx+1) for idx in face] for i, face in enumerate(faces)]
+        print(f"Generated dodecahedron mesh: {len(self.nodes)} nodes, {len(self.elements)} elements")
+
+
+
+    def gen_flared_hex_mesh(self, height, r_base=4.38, r_mid=10, scale=1.0):
+        """
+        Draw a 3D shape with top and bottom faces as regular hexagons of inner radius r_base,
+        and a middle cross-section hexagon of radius r_mid.
+        height: total height of the shape.
+        """
+        s = self.size * scale
+
+        # Tạo các điểm với scale
+        angles = np.linspace(0, 2 * np.pi, 7)[:-1]
+        bottom = np.array([[r_base * np.cos(a), r_base * np.sin(a), 0] for a in angles]) * s / r_mid
+        mid    = np.array([[r_mid  * np.cos(a), r_mid  * np.sin(a), height / 2] for a in angles]) * s / r_mid
+        top    = np.array([[r_base * np.cos(a), r_base * np.sin(a), height] for a in angles]) * s / r_mid
+        points = np.vstack([bottom, mid, top])
+
+        # Dùng ConvexHull để tự động chia các mặt thành tam giác
+        hull = ConvexHull(points)
+        faces = hull.simplices  # Mỗi simplex là một mặt tam giác
+
+        # Xuất nodes và elements
+        self.nodes = [[i+1] + list(pt) for i, pt in enumerate(points)]
+        self.elements = [[i+1] + [(idx+1) for idx in face] for i, face in enumerate(faces)]
+        print(f"Generated flared hex mesh: {len(self.nodes)} nodes, {len(self.elements)} elements")
+
+
     def _gen_rand_spherical_points(self, num_points):
         rng = np.random.default_rng()
         theta = rng.uniform(0, 2 * np.pi, num_points)  # Azimuthal angle
@@ -372,7 +462,14 @@ class Grain(Part):
             points,
             cells
         )
-        
+        # points = np.array([node[1:] for node in self.nodes])
+        # faces = np.array([
+        #     [nid-1 for nid in elem[1:]]
+        #     for elem in self.elements if len(elem) == 4 
+        # ]) # Chuyển về chỉ số 0-based
+        # mesh = meshio.Mesh(points, [("triangle", faces)])  # Adjust indices to be zero-based
+        # mesh.write("convex_hull.stl")  # Save as STL file
+
         gmsh.initialize()
         gmsh.option.setNumber("General.Terminal", 1)
 
@@ -737,11 +834,10 @@ class Grain(Part):
         # plt.show(block=True)
 
 
-    
-
-
-        
 
 
 
-                        
+
+
+
+

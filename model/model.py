@@ -85,6 +85,12 @@ class Model:
             
             if seed_shape == 'sphere':
                 grain.gen_uniform_sphere_mesh()
+            elif seed_shape == 'dodecahedron':
+                grain.gen_dodecahedron_mesh()
+            elif seed_shape == 'flared_hex':
+                grain.gen_flared_hex_mesh(7)
+            elif seed_shape == 'cube':
+                grain.gen_cube_mesh()
             elif seed_shape == 'octahedron':
                 grain.gen_octahedron_mesh()
             elif seed_shape == 'combined':

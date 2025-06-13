@@ -4,34 +4,43 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 
-# Tạo lập phương
-a = 1
-cube = trimesh.creation.box(extents=[a,a,a])
-cube.apply_translation([2,2,2])
+# Define a size for the shapes
+size = 1.0
 
-# Tạo tứ diện đều
-b = 1.5
+# Calculate sizes so that the circumscribed radius ≈ size
+cube_size = 2 * size / np.sqrt(3)
+tetra_size = 4 * size / np.sqrt(6)
+octa_size = size * np.sqrt(2)
+
+# Create cube
+cube = trimesh.creation.box(extents=[cube_size, cube_size, cube_size])
+cube.apply_translation([0, 0, 0])
+
+# Create regular tetrahedron
+
 tetra_vertices = np.array([
     [0, 0, 0],
-    [b, 0, 0],
-    [b/2, b*np.sqrt(3)/2, 0],
-    [b/2, b*np.sqrt(3)/6, b*np.sqrt(6)/3]
+    [tetra_size, 0, 0],
+    [tetra_size/2, tetra_size*np.sqrt(3)/2, 0],
+    [tetra_size/2, tetra_size*np.sqrt(3)/6, tetra_size*np.sqrt(6)/3]
 ])
 tetra = trimesh.convex.convex_hull(tetra_vertices)
-tetra.apply_translation([2,2,2] - tetra.center_mass)
+tetra.apply_translation(-tetra.center_mass)
 
-# Tạo bát diện đều
-c = 1.5
+# Create regular octahedron
 octa_vertices = np.array([
-    [c/2, 0, 0],
-    [-c/2, 0, 0],
-    [0, c/2, 0],
-    [0, -c/2, 0],
-    [0, 0, c/2],
-    [0, 0, -c/2]
+    [octa_size/2, 0, 0],
+    [-octa_size/2, 0, 0],
+    [0, octa_size/2, 0],
+    [0, -octa_size/2, 0],
+    [0, 0, octa_size/2],
+    [0, 0, -octa_size/2]
 ])
 octa = trimesh.convex.convex_hull(octa_vertices)
-octa.apply_translation([2,2,2] - octa.center_mass)
+octa.apply_translation(-octa.center_mass)
+
+# (Optional) You can keep the gen_combined_mesh function if needed for other uses.
+
 
 print("Cube is volume:", cube.is_volume)
 print("Tetra is volume:", tetra.is_volume)
