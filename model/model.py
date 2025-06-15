@@ -140,7 +140,7 @@ class Model:
         
         # run the simulation by involving abaqus solver
         # double precision is requirement'
-        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=6 scratch=.temp/ ask_delete=off"
+        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=2 scratch=.temp/ ask_delete=off"
         logger.info(f"Running the simulation with command:\n {cmd_command}")
         try:
             abaqus_path = r"C:\SIMULIA\Abaqus\Commands"
@@ -334,7 +334,7 @@ class Model:
             if all(hasattr(mat, attr) for attr in ["D1", "D2", "D3", "D4", "D5", "Tm", "Tr"]):
                 file.write(f"*DAMAGE Initiation, CRITERION=JOHNSON COOK\n")
                 file.write(f"{mat.D1}, {mat.D2}, {mat.D3}, {mat.D4}, {mat.D5}, {mat.Tm}, {mat.Tr}, 1\n")
-                file.write(f"*Damage Evolution, type=DISPLACEMENT\n10,\n")
+                file.write(f"*Damage Evolution, type=DISPLACEMENT\n10,\n")  #Damage evolution parameters (11 for mesh size is 0.01 mm and 5.5 for mesh size is 0.005 mm)
 
             # Thermal properties
             if hasattr(mat, "k"):

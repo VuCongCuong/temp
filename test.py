@@ -1,89 +1,107 @@
+#!/usr/bin/env python3
+"""
+combine_cube_octahedron.py
+
+Tạo mesh giao của lập phương và bát diện đều tại cùng tâm mà không sử dụng engine boolean ngoài và không cần rtree.
+"""
 import trimesh
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 
-# Define a size for the shapes
-size = 1.0
-
-# Calculate sizes so that the circumscribed radius ≈ size
-cube_size = 2 * size / np.sqrt(3)
-tetra_size = 4 * size / np.sqrt(6)
-octa_size = size * np.sqrt(2)
-
-# Create cube
-cube = trimesh.creation.box(extents=[cube_size, cube_size, cube_size])
-cube.apply_translation([0, 0, 0])
-
-# Create regular tetrahedron
-
-tetra_vertices = np.array([
-    [0, 0, 0],
-    [tetra_size, 0, 0],
-    [tetra_size/2, tetra_size*np.sqrt(3)/2, 0],
-    [tetra_size/2, tetra_size*np.sqrt(3)/6, tetra_size*np.sqrt(6)/3]
-])
-tetra = trimesh.convex.convex_hull(tetra_vertices)
-tetra.apply_translation(-tetra.center_mass)
-
-# Create regular octahedron
-octa_vertices = np.array([
-    [octa_size/2, 0, 0],
-    [-octa_size/2, 0, 0],
-    [0, octa_size/2, 0],
-    [0, -octa_size/2, 0],
-    [0, 0, octa_size/2],
-    [0, 0, -octa_size/2]
-])
-octa = trimesh.convex.convex_hull(octa_vertices)
-octa.apply_translation(-octa.center_mass)
-
-# (Optional) You can keep the gen_combined_mesh function if needed for other uses.
+def point_in_mesh(point: np.ndarray, mesh: trimesh.Trimesh) -> bool:
+    """
+    Kiểm tra điểm nằm trong mesh bằng cách đếm số lần tia xuất phát từ điểm giao cắt mesh.
+    Nếu số lần cắt là lẻ => trong mesh.
+    """
+    # Tia theo phương +X
+    origins = point.reshape((1, 3))
+    directions = np.array([[1.0, 0.0, 0.0]])
+    locations, index_ray, index_tri = mesh.ray.intersects_location(origins, directions)
+    return len(index_ray) % 2 == 1
 
 
-print("Cube is volume:", cube.is_volume)
-print("Tetra is volume:", tetra.is_volume)
-print("Octa is volume:", octa.is_volume)
+def subtract_and_combine_cube_octahedron(size=1.0):
+    """
+    Tạo mesh giao (intersection) giữa lập phương và bát diện đều cùng tâm.
+    - size: kích thước biến cho cả hai hình.
+    Trả về:
+      - inter_mesh: Trimesh object của khu vực giao.
+    """
+    # 1. Tạo lập phương
+    cube = trimesh.creation.box(extents=[size, size, size])
+    # 2. Tạo bát diện đều thủ công
+    points = np.array([
+        [ size,  0.0,  0.0],
+        [-size,  0.0,  0.0],
+        [ 0.0,  size,  0.0],
+        [ 0.0, -size,  0.0],
+        [ 0.0,  0.0,  size],
+        [ 0.0,  0.0, -size]
+    ])
+    faces = np.array([
+        [0, 2, 4], [2, 1, 4], [1, 3, 4], [3, 0, 4],
+        [0, 5, 2], [2, 5, 1], [1, 5, 3], [3, 5, 0]
+    ])
+    octa = trimesh.Trimesh(vertices=points, faces=faces, process=True)
 
-# Combine (union) 3 khối
+    # 3. Căn giữa cả hai mesh về gốc
+    cube.apply_translation(-cube.centroid)
+    octa.apply_translation(-octa.centroid)
 
-# combined = trimesh.boolean.union([cube, tetra, octa], engine='blender')
+    # 4. Lấy đỉnh thuộc vùng giao
+    cube_inside = np.array([v for v in cube.vertices if point_in_mesh(v, octa)])
+    octa_inside = np.array([v for v in octa.vertices if point_in_mesh(v, cube)])
 
-# trimesh.Scene(combined).show()
+    # 5. Lọc mặt giao: cả 3 đỉnh đều nằm trong vùng giao
+    inter_cube_faces = []
+    for face in cube.faces:
+        pts = cube.vertices[face]
+        if all(point_in_mesh(pt, octa) for pt in pts):
+            inter_cube_faces.append(face)
+    inter_octa_faces = []
+    for face in octa.faces:
+        pts = octa.vertices[face]
+        if all(point_in_mesh(pt, cube) for pt in pts):
+            inter_octa_faces.append(face)
+    inter_cube_faces = np.array(inter_cube_faces)
+    inter_octa_faces = np.array(inter_octa_faces)
+
+    # 6. Ghép đỉnh và mặt
+    if cube_inside.size == 0:
+        cube_inside = np.empty((0, 3))
+    if octa_inside.size == 0:
+        octa_inside = np.empty((0, 3))
+    inter_vertices = np.vstack([cube_inside, octa_inside])
+    inter_faces = []
+    # Tạo map chỉ số
+    cube_map = {tuple(v): i for i, v in enumerate(cube_inside)}
+    octa_map = {tuple(v): i + len(cube_inside) for i, v in enumerate(octa_inside)}
+
+    for face in inter_cube_faces:
+        try:
+            inter_faces.append([cube_map[tuple(cube.vertices[i])] for i in face])
+        except KeyError:
+            pass
+    for face in inter_octa_faces:
+        try:
+            inter_faces.append([octa_map[tuple(octa.vertices[i])] for i in face])
+        except KeyError:
+            pass
+
+    # 7. Tạo mesh kết quả và làm sạch
+    inter_mesh = trimesh.Trimesh(vertices=inter_vertices, faces=np.array(inter_faces), process=True)
+    inter_mesh.remove_duplicate_faces()
+    inter_mesh.remove_degenerate_faces()
+    inter_mesh.remove_unreferenced_vertices()
+    inter_mesh = inter_mesh.process(validate=True)
+
+    return inter_mesh
 
 
-
-# intersected = trimesh.boolean.intersection([cube, tetra, octa], engine='blender')
-
-# trimesh.Scene(intersected).show()
-
-
-intersected = trimesh.boolean.intersection([cube, tetra, octa], engine='blender')
-
-fig = plt.figure(figsize=(10, 8))
-ax = fig.add_subplot(111, projection='3d')
-def plot_trimesh(ax, mesh, color):
-    for face in mesh.faces:
-        tri = mesh.vertices[face]
-        poly = Poly3DCollection([tri], alpha=0.5, facecolor=color, edgecolor='k')
-        ax.add_collection3d(poly)
-
-# Vẽ từng mesh (bạn có thể bật/tắt từng dòng để xem riêng từng khối)
-# plot_trimesh(ax, cube, 'red')
-# plot_trimesh(ax, tetra, 'green')
-# plot_trimesh(ax, octa, 'blue')
-
-# Vẽ phần giao nhau (intersection) với màu vàng nổi bật
-plot_trimesh(ax, intersected, 'yellow')
-
-# Thiết lập giới hạn trục
-ax.set_xlim(0, 4)
-ax.set_ylim(0, 4)
-ax.set_zlim(0, 4)
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-plt.title('Cube, Tetrahedron, Octahedron and Intersection')
-plt.tight_layout()
-plt.show()
+if __name__ == '__main__':
+    mesh = subtract_and_combine_cube_octahedron(size=1.0)
+    print(f"Intersection mesh: {len(mesh.vertices)} vertices, {len(mesh.faces)} faces")
+    try:
+        mesh.show()
+    except Exception:
+        print("Không thể hiển thị mesh. Hãy xuất file hoặc dùng PyVista để xem.")

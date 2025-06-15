@@ -379,7 +379,7 @@ class Grain(Part):
 
 
 
-    def gen_flared_hex_mesh(self, height, r_base=4.38, r_mid=10, scale=1.0):
+    def gen_flared_hex_mesh(self, height, r_base=2.19, r_mid=5, scale=1.0):
         """
         Draw a 3D shape with top and bottom faces as regular hexagons of inner radius r_base,
         and a middle cross-section hexagon of radius r_mid.
@@ -462,13 +462,7 @@ class Grain(Part):
             points,
             cells
         )
-        # points = np.array([node[1:] for node in self.nodes])
-        # faces = np.array([
-        #     [nid-1 for nid in elem[1:]]
-        #     for elem in self.elements if len(elem) == 4 
-        # ]) # Chuyển về chỉ số 0-based
-        # mesh = meshio.Mesh(points, [("triangle", faces)])  # Adjust indices to be zero-based
-        # mesh.write("convex_hull.stl")  # Save as STL file
+
 
         gmsh.initialize()
         gmsh.option.setNumber("General.Terminal", 1)
@@ -492,7 +486,7 @@ class Grain(Part):
         surfaces = gmsh.model.getEntities(2)
         surface_tags = [s[1] for s in surfaces]
         sl = gmsh.model.geo.addSurfaceLoop(surface_tags)
-        vol = gmsh.model.geo.addVolume([sl])
+        gmsh.model.geo.addVolume([sl])
         gmsh.model.geo.synchronize()
 
         # Mesh size controls (optional)
@@ -505,9 +499,24 @@ class Grain(Part):
         proportion = 0.04  # Adjust this proportion as needed
         mesh_size = bounding_box_diagonal * proportion
 
+        # gmsh.option.setNumber("Mesh.Algorithm3D",            5)  # 5 = Frontal-Delaunay :contentReference[oaicite:1]{index=1}
+        # gmsh.option.setNumber("Mesh.Optimize",               1)  # bật tối ưu hóa chung
+        # gmsh.option.setNumber("Mesh.OptimizeThreshold",      0.5)  # chỉ tối ưu phần tử chất lượng < 0.5
+        # gmsh.option.setNumber("Mesh.OptimizeNetgen",         1)  # dùng Netgen optimizer :contentReference[oaicite:2]{index=2}
         gmsh.option.setNumber("Mesh.CharacteristicLengthMin", mesh_size)
         gmsh.option.setNumber("Mesh.CharacteristicLengthMax", mesh_size)    # Generate 3D mesh
+
         gmsh.model.mesh.generate(3)
+        try:
+            gmsh.plugin("ThinLayerFixMesh").apply(0)  # xử lý sliver 
+        except Exception:
+            pass
+        gmsh.model.mesh.optimize("Netgen")  # Tối ưu hóa mesh bằng Netgen
+        
+        
+        node_tags, node_coords, _ = gmsh.model.mesh.getNodes()
+        self.points = node_coords.reshape(-1, 3)
+        # Lấy tất cả các phần tử tetra (dim=3)
 
         
         # Extract the mesh data back into nodes and elements
@@ -719,12 +728,12 @@ class Grain(Part):
                 potential[current] = []
             potential[current].append([conn, dist_to_line])
 
-        if len(potential[int(current)]) == 0:
+        if int(current) not in potential or len(potential[int(current)]) == 0:
             return visited  # Prevent infinite recursion if no valid next node
         
-        potential[current].sort(key=lambda x: x[1])
-        visited.append(potential[current][0][0])
-        return self._find_hull_boundary(potential[current][0][0], pt_start, pt_end, visited, start)
+        potential[int(current)].sort(key=lambda x: x[1])
+        visited.append(potential[int(current)][0][0])
+        return self._find_hull_boundary(potential[int(current)][0][0], pt_start, pt_end, visited, start)
 
     def _plot_boundary_cluster(self, clusters, boundary):
         
