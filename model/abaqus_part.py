@@ -224,6 +224,8 @@ class Grain(Part):
         ])
         tetra = trimesh.convex.convex_hull(tetra_vertices)
         tetra.apply_translation(-tetra.center_mass)
+        rot = rotation_matrix(np.deg2rad(20), [0, 0, 1], tetra.center_mass)
+        tetra.apply_transform(rot)
 
         # Create regular octahedron
         octa_vertices = np.array([
@@ -496,7 +498,7 @@ class Grain(Part):
         bounding_box_diagonal = ((xmax - xmin)**2 + (ymax - ymin)**2 + (zmax - zmin)**2)**0.5
 
         # Set mesh size as a proportion of the bounding box diagonal
-        proportion = 0.04  # Adjust this proportion as needed
+        proportion = 0.05  # Adjust this proportion as needed
         mesh_size = bounding_box_diagonal * proportion
 
         # gmsh.option.setNumber("Mesh.Algorithm3D",            5)  # 5 = Frontal-Delaunay :contentReference[oaicite:1]{index=1}
@@ -516,7 +518,6 @@ class Grain(Part):
         
         node_tags, node_coords, _ = gmsh.model.mesh.getNodes()
         self.points = node_coords.reshape(-1, 3)
-        # Lấy tất cả các phần tử tetra (dim=3)
 
         
         # Extract the mesh data back into nodes and elements
