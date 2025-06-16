@@ -179,37 +179,62 @@ class Grain(Part):
         print(f"Generated cube mesh: {len(nodes)} nodes, {len(elements)} elements")
 
 
-    def get_intersection_points(mesh1, mesh2, tol=1e-6):
+    def gen_union_mesh(self):
         """
-        Trả về các điểm nằm trên giao tuyến giữa hai mesh (giao bề mặt).
-        mesh1, mesh2: trimesh.Trimesh
-        tol: ngưỡng khoảng cách để coi là giao nhau
+        Combine (union) cube, tetrahedron, and octahedron into a single mesh.
+        Không substract, chỉ union các khối lại với nhau.
         """
-        # Lấy tất cả các đỉnh của mesh1 và mesh2
-        verts1 = mesh1.vertices
-        verts2 = mesh2.vertices
+        # Tính kích thước các khối sao cho bán kính ngoại tiếp ≈ self.size
+        cube_size = 2 * self.size / np.sqrt(3)
+        tetra_size = 4 * self.size / np.sqrt(6)
+        octa_size = 1.5 * self.size * np.sqrt(2)
 
-        # Tìm các đỉnh của mesh1 nằm trên bề mặt mesh2
-        is_on_surface2 = mesh2.contains(verts1)
-        intersection_points1 = verts1[is_on_surface2]
+        # Tạo các khối
+        cube = trimesh.creation.box(extents=[cube_size, cube_size, cube_size])
+        cube.apply_translation([0, 0, 0])
 
-        # Tìm các đỉnh của mesh2 nằm trên bề mặt mesh1
-        is_on_surface1 = mesh1.contains(verts2)
-        intersection_points2 = verts2[is_on_surface1]
+        tetra_vertices = np.array([
+            [0, 0, 0],
+            [tetra_size, 0, 0],
+            [tetra_size/2, tetra_size*np.sqrt(3)/2, 0],
+            [tetra_size/2, tetra_size*np.sqrt(3)/6, tetra_size*np.sqrt(6)/3]
+        ])
+        tetra = trimesh.convex.convex_hull(tetra_vertices)
+        tetra.apply_translation(-tetra.center_mass)
+        # rot = rotation_matrix(np.deg2rad(20), [0, 0, 1], tetra.center_mass)
+        # tetra.apply_transform(rot)
 
-        # Gộp lại và loại bỏ trùng lặp
-        all_points = np.vstack([intersection_points1, intersection_points2])
-        # Loại bỏ các điểm trùng nhau (theo tol)
-        unique_points = trimesh.points.merge_vertices(all_points, radius=tol)
-        return unique_points
+        octa_vertices = np.array([
+            [octa_size/2, 0, 0],
+            [-octa_size/2, 0, 0],
+            [0, octa_size/2, 0],
+            [0, -octa_size/2, 0],
+            [0, 0, octa_size/2],
+            [0, 0, -octa_size/2]
+        ])
+        octa = trimesh.convex.convex_hull(octa_vertices)
+        octa.apply_translation(-octa.center_mass)
 
+        # Combine (union) các mesh lại với nhau
+        combined = trimesh.boolean.union([cube, tetra, octa], engine='blender')
+        combined.remove_duplicate_faces()
+        combined.remove_degenerate_faces()
+        combined.remove_unreferenced_vertices()
+        combined = combined.process(validate=True)
 
+        # Lấy lại nodes và elements
+        points = combined.vertices
+        faces = combined.faces
+        self.nodes = [[i+1] + list(pt) for i, pt in enumerate(points)]
+        self.elements = [[i+1] + [v+1 for v in face] for i, face in enumerate(faces)]
+        print(f"Generated union mesh: {len(self.nodes)} nodes, {len(self.elements)} elements")
+        return combined
 
     def gen_combined_mesh(self):
         # Calculate sizes so that the circumscribed radius ≈ self.size
         cube_size = 2 * self.size / np.sqrt(3)
         tetra_size = 4 * self.size / np.sqrt(6)
-        octa_size = self.size * np.sqrt(2)
+        octa_size =  self.size * np.sqrt(2)
 
         # Create cube
         cube = trimesh.creation.box(extents=[cube_size, cube_size, cube_size])
@@ -224,7 +249,7 @@ class Grain(Part):
         ])
         tetra = trimesh.convex.convex_hull(tetra_vertices)
         tetra.apply_translation(-tetra.center_mass)
-        rot = rotation_matrix(np.deg2rad(20), [0, 0, 1], tetra.center_mass)
+        rot = rotation_matrix(np.deg2rad(30), [0, 0, 1], tetra.center_mass)
         tetra.apply_transform(rot)
 
         # Create regular octahedron
@@ -241,11 +266,12 @@ class Grain(Part):
 
         # Perform intersection
         substracted = trimesh.boolean.intersection([cube, tetra, octa], engine='blender')
+        # trimesh.repair.fix_normals(substracted)
+        # substracted.merge_vertices()
         substracted.remove_duplicate_faces()
         substracted.remove_degenerate_faces()
         substracted.remove_unreferenced_vertices()
         substracted = substracted.process(validate=True)
-        # substracted = substracted.subdivide()
         print("Is watertight:", substracted.is_watertight)
 
         if not substracted.is_watertight or len(substracted.faces) < 50:
@@ -498,7 +524,7 @@ class Grain(Part):
         bounding_box_diagonal = ((xmax - xmin)**2 + (ymax - ymin)**2 + (zmax - zmin)**2)**0.5
 
         # Set mesh size as a proportion of the bounding box diagonal
-        proportion = 0.05  # Adjust this proportion as needed
+        proportion = 0.04  # Adjust this proportion as needed
         mesh_size = bounding_box_diagonal * proportion
 
         # gmsh.option.setNumber("Mesh.Algorithm3D",            5)  # 5 = Frontal-Delaunay :contentReference[oaicite:1]{index=1}

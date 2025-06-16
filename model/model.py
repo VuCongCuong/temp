@@ -95,6 +95,8 @@ class Model:
                 grain.gen_octahedron_mesh()
             elif seed_shape == 'combined':
                 grain.gen_combined_mesh()
+            elif seed_shape == 'union':
+                grain.gen_union_mesh()
             elif seed_shape == 'random':
                 grain.gen_convex_hull_grain(vertices)
 
