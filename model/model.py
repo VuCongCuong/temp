@@ -49,7 +49,7 @@ class Model:
         self.abra_vel = velocity
         self.tool_rigid = rigid
         grain_pos = []
-        x = -(size + 100) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
+        x = -(size + 50) # 100 is the offset of the tool to ensure that the tool is not in contact with the workpiece
         z = self.base.zrange[1] - init_depth
         yoffset = self.base.yrange[1]/2 
 
@@ -142,7 +142,7 @@ class Model:
         
         # run the simulation by involving abaqus solver
         # double precision is requirement'
-        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=2 scratch=.temp/ ask_delete=off"
+        cmd_command = f"abaqus job={self.name} input=./.run/{self.name} cpus=6 scratch=.temp/ ask_delete=off"
         logger.info(f"Running the simulation with command:\n {cmd_command}")
         try:
             abaqus_path = r"C:\SIMULIA\Abaqus\Commands"
@@ -520,10 +520,10 @@ class Model:
             
         file.write("*INITIAL CONDITIONS, TYPE=TEMPERATURE\n")
         for grain in self.grains:
-            file.write(f"{grain.name}.{grain.name}_NSET, 20\n")
+            file.write(f"{grain.name}.{grain.name}_NSET, 298\n")
         
         if mode == 0:
-            file.write("BASE.BASE_NSET, 20\n")
+            file.write("BASE.BASE_NSET, 298\n")
        
 
     def _write_interaction(self, file):

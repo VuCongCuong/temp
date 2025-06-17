@@ -164,71 +164,6 @@ class Grain(Part):
         self.elements = elements
         print(f"Generated regular octahedron mesh: {len(nodes)} nodes, {len(elements)} elements")
 
-    def gen_cube_mesh(self):
-        """
-        Sinh mesh hình lập phương (cube) với cạnh có độ dài self.size.
-        """
-        # Tạo hình lập phương với cạnh = self.size
-        cube = trimesh.creation.box(extents=[self.size, self.size, self.size])
-        cube.apply_translation([0, 0, 0])  
-
-        nodes = [[i+1] + list(pt) for i, pt in enumerate(cube.vertices)]
-        elements = [[i+1] + [v+1 for v in face] for i, face in enumerate(cube.faces)]
-        self.nodes = nodes
-        self.elements = elements
-        print(f"Generated cube mesh: {len(nodes)} nodes, {len(elements)} elements")
-
-
-    def gen_union_mesh(self):
-        """
-        Combine (union) cube, tetrahedron, and octahedron into a single mesh.
-        Không substract, chỉ union các khối lại với nhau.
-        """
-        # Tính kích thước các khối sao cho bán kính ngoại tiếp ≈ self.size
-        cube_size = 2 * self.size / np.sqrt(3)
-        tetra_size = 4 * self.size / np.sqrt(6)
-        octa_size = 1.5 * self.size * np.sqrt(2)
-
-        # Tạo các khối
-        cube = trimesh.creation.box(extents=[cube_size, cube_size, cube_size])
-        cube.apply_translation([0, 0, 0])
-
-        tetra_vertices = np.array([
-            [0, 0, 0],
-            [tetra_size, 0, 0],
-            [tetra_size/2, tetra_size*np.sqrt(3)/2, 0],
-            [tetra_size/2, tetra_size*np.sqrt(3)/6, tetra_size*np.sqrt(6)/3]
-        ])
-        tetra = trimesh.convex.convex_hull(tetra_vertices)
-        tetra.apply_translation(-tetra.center_mass)
-        # rot = rotation_matrix(np.deg2rad(20), [0, 0, 1], tetra.center_mass)
-        # tetra.apply_transform(rot)
-
-        octa_vertices = np.array([
-            [octa_size/2, 0, 0],
-            [-octa_size/2, 0, 0],
-            [0, octa_size/2, 0],
-            [0, -octa_size/2, 0],
-            [0, 0, octa_size/2],
-            [0, 0, -octa_size/2]
-        ])
-        octa = trimesh.convex.convex_hull(octa_vertices)
-        octa.apply_translation(-octa.center_mass)
-
-        # Combine (union) các mesh lại với nhau
-        combined = trimesh.boolean.union([cube, tetra, octa], engine='blender')
-        combined.remove_duplicate_faces()
-        combined.remove_degenerate_faces()
-        combined.remove_unreferenced_vertices()
-        combined = combined.process(validate=True)
-
-        # Lấy lại nodes và elements
-        points = combined.vertices
-        faces = combined.faces
-        self.nodes = [[i+1] + list(pt) for i, pt in enumerate(points)]
-        self.elements = [[i+1] + [v+1 for v in face] for i, face in enumerate(faces)]
-        print(f"Generated union mesh: {len(self.nodes)} nodes, {len(self.elements)} elements")
-        return combined
 
     def gen_combined_mesh(self):
         # Calculate sizes so that the circumscribed radius ≈ self.size
@@ -249,7 +184,7 @@ class Grain(Part):
         ])
         tetra = trimesh.convex.convex_hull(tetra_vertices)
         tetra.apply_translation(-tetra.center_mass)
-        rot = rotation_matrix(np.deg2rad(30), [0, 0, 1], tetra.center_mass)
+        rot = rotation_matrix(np.deg2rad(10), [0, 0, 1], tetra.center_mass)
         tetra.apply_transform(rot)
 
         # Create regular octahedron
