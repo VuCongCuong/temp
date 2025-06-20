@@ -65,9 +65,9 @@ materials = {
     "Ti64": {
         "type": "jonhson_cook",
         "elastic": {
-            "density":4.5e-15,
-            "youngs_modulus":144e3,
-            "poisson_ratio": 0.32 
+            "density":4.44e-15,
+            "youngs_modulus":108e3,
+            "poisson_ratio": 0.33 
         },
         "heat": {
             "heat_capacity": 910e12,
@@ -75,13 +75,13 @@ materials = {
             "specific_heat": 656e12
         },
         "plastic": {
-            "A": 870,
-            "B": 990,
-            "C": 0.011,
-            "n": 0.25,
-            "m": 1,
-            "Tr": 298,
-            "Tm": 1833
+            "A": 875,
+            "B": 793,
+            "C": 0.01,
+            "n": 0.386,
+            "m": 0.71,
+            "Tr": 293.15,
+            "Tm": 1833.15
         },
         "failure": {
             "D1": -0.09,
