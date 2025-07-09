@@ -3,6 +3,7 @@
 *.rpy.*
 Grind_*
 *.pyc
+*.odb
 # Ignore virtual environment files
 .venv/
 

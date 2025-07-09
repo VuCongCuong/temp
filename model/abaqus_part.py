@@ -167,9 +167,9 @@ class Grain(Part):
 
     def gen_combined_mesh(self):
         # Calculate sizes so that the circumscribed radius ≈ self.size
-        cube_size = 2 * self.size / np.sqrt(3)
-        tetra_size = 4 * self.size / np.sqrt(6)
-        octa_size =  self.size * np.sqrt(2)
+        cube_size = 4 * self.size / np.sqrt(3)
+        tetra_size = 8 * self.size / np.sqrt(6)
+        octa_size = 2 * self.size * np.sqrt(2)
 
         # Create cube
         cube = trimesh.creation.box(extents=[cube_size, cube_size, cube_size])
@@ -184,7 +184,7 @@ class Grain(Part):
         ])
         tetra = trimesh.convex.convex_hull(tetra_vertices)
         tetra.apply_translation(-tetra.center_mass)
-        rot = rotation_matrix(np.deg2rad(10), [0, 0, 1], tetra.center_mass)
+        rot = rotation_matrix(np.deg2rad(13), [0, 0, 1], tetra.center_mass) #12
         tetra.apply_transform(rot)
 
         # Create regular octahedron
@@ -229,6 +229,10 @@ class Grain(Part):
             return None
         scale_factor = 1.0
         substracted.apply_scale(scale_factor)  # Scale the mesh to the desired size
+
+        rot = rotation_matrix(np.deg2rad(45), [0, 0, 1], substracted.center_mass) #12
+        substracted.apply_transform(rot)
+
 
         # Extract vertices and faces from the resulting mesh
         points = substracted.vertices

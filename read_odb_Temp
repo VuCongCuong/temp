@@ -1,0 +1,205 @@
+import sys
+import numpy as np
+
+import odbAccess
+from abaqusConstants import *
+import os
+
+# -*- coding: utf-8 -*-
+# ...existing code...
+class UnionFind:
+    """Union-Find (Disjoint-Set) implementation for clustering."""
+    def __init__(self):
+        self.parent = {}
+        self.rank = {}
+
+    def find(self, node):
+        """Find the root of the node with path compression."""
+        if self.parent[node] != node:
+            self.parent[node] = self.find(self.parent[node])
+        return self.parent[node]
+
+    def union(self, node1, node2):
+        """Union two nodes by rank."""
+        root1 = self.find(node1)
+        root2 = self.find(node2)
+        if root1 != root2:
+            if self.rank[root1] > self.rank[root2]:
+                self.parent[root2] = root1
+            elif self.rank[root1] < self.rank[root2]:
+                self.parent[root1] = root2
+            else:
+                self.parent[root2] = root1
+                self.rank[root1] += 1
+
+    def add(self, node):
+        """Add a new node."""
+        if node not in self.parent:
+            self.parent[node] = node
+            self.rank[node] = 0
+
+    def get_all(self):
+        """Get all sets as a list of lists."""
+        clusters = {}
+        for node in self.parent:
+            root = self.find(node)
+            if root not in clusters:
+                clusters[root] = []
+            clusters[root].append(node)
+        return list(clusters.values())
+    
+
+def cluster_elements_optimized(elements, status_map, min_cluster_size=100):
+    """
+    Optimized clustering of elements using Union-Find.
+    
+    Args:
+        elements (list): List of elements with attributes `label` and `connectivity`.
+        status_map (dict): A map of element labels to their status (e.g., active/inactive).
+        min_cluster_size (int): Minimum number of elements in a cluster to keep.
+
+    Returns:
+        tuple: (node_clusters, element_clusters) after filtering.
+    """
+    # Initialize Union-Find structure
+    uf = UnionFind()
+
+    # Step 1: Union all nodes that belong to the same element
+    for ele in elements:
+        label = ele.label
+        if not status_map[label]:
+            continue  # Skip inactive elements
+        conn = ele.connectivity
+        for node in conn:
+            uf.add(node)  # Ensure all nodes are in Union-Find
+        for i in range(len(conn) - 1):
+            uf.union(conn[i], conn[i + 1])
+
+    # Step 2: Group nodes by their connected component root
+    clusters = {}
+    for node in uf.parent:
+        root = uf.find(node)
+        if root not in clusters:
+            clusters[root] = set()
+        clusters[root].add(node)
+
+    # Step 3: Map nodes back to elements
+    node_to_cluster = {node: root for root, nodes in clusters.items() for node in nodes}
+    element_clusters = {}
+    for ele in elements:
+        label = ele.label
+        if not status_map[label]:
+            continue
+        cluster_id = node_to_cluster[ele.connectivity[0]]  # Assume connectivity is non-empty
+        if cluster_id not in element_clusters:
+            element_clusters[cluster_id] = []
+        element_clusters[cluster_id].append(label)
+
+    # Step 4: Filter clusters by size
+    element_clusters = [cluster for cluster in element_clusters.values() if len(cluster) > min_cluster_size]
+    node_clusters = [list(nodes) for nodes in clusters.values() if len(nodes) > min_cluster_size]
+
+    return node_clusters, element_clusters
+
+
+
+
+def get_frame_max_temps(filepath, instance_name, step_index=-1):
+
+    try:
+        odb = odbAccess.openOdb(filepath)
+    except Exception as e:
+        print("[Error] can't open ODB '{}': {}".format(filepath, e))
+        return None
+
+   
+    try:
+        inst = odb.rootAssembly.instances[instance_name]
+    except KeyError:
+        print("[Error] can't find out instance '{}' trong ODB.".format(instance_name))
+        odb.close()
+        return None
+
+    
+    steps = list(odb.steps.values())
+    if not steps:
+        print("[Error] in ODB.")
+        odb.close()
+        return None
+
+    if step_index < 0:
+        step = steps[step_index]  
+    else:
+        if step_index >= len(steps):
+            print("[Error] step_index ({})  steps ({}).".format(step_index, len(steps)))
+            odb.close()
+            return None
+        step = steps[step_index]
+
+  
+    frame_results = []
+
+    for i, frame in enumerate(step.frames):
+       
+        nt11_vals = frame.fieldOutputs['NT11'].getSubset(region=inst).values
+
+        if len(nt11_vals) == 0:
+            continue
+
+       
+        max_node_label = max(v.nodeLabel for v in nt11_vals)
+        temps = np.full(max_node_label + 1, np.nan, dtype=float)
+
+        for v in nt11_vals:
+            temps[v.nodeLabel] = v.data
+
+        
+        valid_temps = temps[~np.isnan(temps)]
+        if valid_temps.size == 0:
+            continue
+
+        current_max = float(np.max(valid_temps))
+        
+        frame_time = frame.frameValue
+
+        frame_results.append({
+            "frame_index": i,
+            "frame_time": float(frame_time),
+            "max_temp": current_max
+        })
+
+
+   
+    base = os.path.splitext(os.path.basename(filepath))[0]
+    txt_filename = "frame_max_temps_{}.txt".format(base)
+    with open(txt_filename, 'w') as f:
+       
+        f.write("FrameIndex\tFrameTime\tMaxTemp\n")
+        for rec in frame_results:
+            f.write("{}\t{}\t{}\n".format(rec['frame_index'], rec['frame_time'], rec['max_temp']))
+
+    odb.close()
+    print("[Info] had success '{}', result has print '{}'.".format(filepath, txt_filename))
+    return frame_results
+
+def get_all_odb_files(directory):
+    return [f for f in os.listdir(directory) if f.lower().endswith('.odb')]
+
+
+if __name__ == "__main__":
+    cwd = os.getcwd()
+    
+    odb_files = [f for f in os.listdir(cwd) if f.lower().endswith('.odb')]
+
+    if not odb_files:
+        print("[Info] no file .odb in folder.")
+        sys.exit(0)
+
+    for odb_file in odb_files:
+        path = os.path.join(cwd, odb_file)
+        res = get_frame_max_temps(path, instance_name='HAT_MAI-LUC_GIAC_DEU', step_index=-1)
+        if res is None:
+            print("[Warning] ignore file '{}'.".format(odb_file))
+        else:
+            print("  {}: {} frames has print txt".format(odb_file, len(res)))
+    sys.exit(0)
