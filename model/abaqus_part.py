@@ -230,7 +230,7 @@ class Grain(Part):
         scale_factor = 1.0
         substracted.apply_scale(scale_factor)  # Scale the mesh to the desired size
 
-        rot = rotation_matrix(np.deg2rad(45), [0, 0, 1], substracted.center_mass) #12
+        rot = rotation_matrix(np.deg2rad(32), [0, 0, 1], substracted.center_mass) #12
         substracted.apply_transform(rot)
 
 
