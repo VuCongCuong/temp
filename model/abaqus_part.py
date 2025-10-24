@@ -132,12 +132,12 @@ class Grain(Part):
 
 
 
-    def gen_octahedron_mesh(self):
+    def gen_octahedron_mesh(self, scale = 1.5):
         """
         Sinh mesh bát diện đều (regular octahedron) với bán kính self.size.
         """
         # Tọa độ 6 đỉnh bát diện đều tâm tại gốc
-        a = self.size
+        a = self.size * scale 
         points = np.array([
             [ a,  0,  0],
             [-a,  0,  0],
@@ -248,7 +248,7 @@ class Grain(Part):
 
 
 
-    def gen_uniform_sphere_mesh(self, n_theta = 20, n_phi = 10, scale = 0.7):
+    def gen_uniform_sphere_mesh(self, n_theta = 20, n_phi = 10, scale = 1.0):
         """
         Generate a uniform sphere mesh (nodes and triangular faces).
         n_theta: number of divisions along azimuthal angle (longitude)
@@ -322,12 +322,12 @@ class Grain(Part):
         print(f"Generated uniform sphere mesh: {len(nodes)} nodes, {len(elements)} elements")
 
 
-    def gen_dodecahedron_mesh(self):
+    def gen_dodecahedron_mesh(self, scale = 0.7):
         """
         Generate mesh of a regular dodecahedron with circumradius self.size.
         Triangulates faces via ConvexHull.
         """
-        phi = (1.0 + np.sqrt(5.0)) / 2.0
+        phi = (1.0 + np.sqrt(5.0)) / 2.0 
         # Define 20 vertices of a regular dodecahedron
         points = np.array([
             [ 1,  1,  1], [ 1,  1, -1], [ 1, -1,  1], [ 1, -1, -1],
@@ -335,7 +335,7 @@ class Grain(Part):
             [ 0,  1/phi,  phi], [ 0,  1/phi, -phi], [ 0, -1/phi,  phi], [ 0, -1/phi, -phi],
             [ 1/phi,  phi, 0], [ 1/phi, -phi, 0], [-1/phi,  phi, 0], [-1/phi, -phi, 0],
             [ phi, 0,  1/phi], [ phi, 0, -1/phi], [-phi, 0,  1/phi], [-phi, 0, -1/phi]
-        ]) * self.size
+        ]) * self.size * scale  # Scale the points
         # Compute convex hull to triangulate faces
         hull = ConvexHull(points)
         faces = hull.simplices
@@ -346,7 +346,7 @@ class Grain(Part):
 
 
 
-    def gen_flared_hex_mesh(self, height, r_base=2.19, r_mid=5, scale=1.0):
+    def gen_flared_hex_mesh(self, height, r_base=2.19, r_mid=5, scale=1.8):
         """
         Draw a 3D shape with top and bottom faces as regular hexagons of inner radius r_base,
         and a middle cross-section hexagon of radius r_mid.

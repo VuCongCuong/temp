@@ -251,7 +251,7 @@ class Model:
             with open('.run/'+file_path+'.inp', 'w') as file:
                 file.write("!Grinding simulation process, Author: Vu Hoai Lam\n")
                 file.write("!Email: Lam.VH205731@sis.hust.edu.vn\n")
-                file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=-273.5\n")
+                file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=0\n")
                 mats = [self.base.mat.name]
                 mat_lists = [self.base.mat]
                 for grain in self.grains:
@@ -336,7 +336,7 @@ class Model:
             if all(hasattr(mat, attr) for attr in ["D1", "D2", "D3", "D4", "D5", "Tm", "Tr"]):
                 file.write(f"*DAMAGE Initiation, CRITERION=JOHNSON COOK\n")
                 file.write(f"{mat.D1}, {mat.D2}, {mat.D3}, {mat.D4}, {mat.D5}, {mat.Tm}, {mat.Tr}, 1\n")
-                file.write(f"*Damage Evolution, type=DISPLACEMENT\n10,\n")  #Damage evolution parameters (11 for mesh size is 0.01 mm and 5.5 for mesh size is 0.005 mm)
+                file.write(f"*Damage Evolution, type=DISPLACEMENT\n6,\n")  #Damage evolution parameters (12 for mesh size is 0.01 mm and 6 for mesh size is 0.005 mm)
 
             # Thermal properties
             if hasattr(mat, "k"):

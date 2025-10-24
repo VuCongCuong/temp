@@ -5,10 +5,11 @@
 # first is the properties of the material used in the simulation.
 # the system used in this simulation is the mirco meter system.
 
-# lenght is in [micro meter], time is in [second], temperature is in [kelvin].
+# lenght is in [micro meter], time is in [second], temperature is in [kelvin], mass is in [kilogram].
 # density is in [10^18 kg/m^3], youngs_modulus is in [MPa], poisson_ratio is in [percentage].
 # thermal_conductivity is in [10^-6 W/m*K], thermal_capacity is in [10^-12 jun/kg*K].
 # stress is in [MPa], strain is in [percentage].
+# jun bằng N * m
 
 # e-6 meter, kilogram, kevin, s,  
 

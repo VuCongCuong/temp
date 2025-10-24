@@ -9,6 +9,11 @@ from PySide6.QtCore import Signal, QObject
 from ui.VTKMeshViewer import VTKMeshViewer
 from ui.mainwindow import Ui_MainWindow
 
+import importlib
+import subprocess
+import os
+from ui import mainwindow
+
 from model.model import Model
 from model.material import JonhsonCook, Material
 
@@ -86,6 +91,91 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tool_mode.addItems(tool_mode)
         self.abrasive_shape.addItems(abrasive_shapes)
 
+
+
+
+
+    def restart_application(self):
+        """Resets the application to its initial state, regenerates mainwindow.py, and reloads code."""
+        # Dừng mô phỏng nếu đang chạy
+        self.stop_simulation()
+        
+        # Đường dẫn đến file .ui và output
+        ui_file = r"C:\Users\Laptop K1\Downloads\temp\temp\ui\mainwindow.ui"
+        output_file = r"C:\Users\Laptop K1\Downloads\temp\temp\ui\mainwindow.py"
+        
+        # Kiểm tra xem file .ui có tồn tại không
+        if not os.path.exists(ui_file):
+            self.logger.error(f"UI file not found: {ui_file}")
+            return
+        
+        # Kiểm tra xem pyside6-uic có sẵn không
+        try:
+            subprocess.run(["pyside6-uic", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        except (FileNotFoundError, OSError):
+            self.logger.error("pyside6-uic not found. Please ensure PySide6 is installed and Scripts directory is in PATH.")
+            return
+        
+        # Tạo lại mainwindow.py từ file .ui
+        try:
+            subprocess.run(["pyside6-uic", ui_file, "-o", output_file], check=True)
+            self.logger.info(f"Regenerated {output_file} from {ui_file}")
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to regenerate mainwindow.py: {e}")
+            return
+        
+        # Tải lại module mainwindow
+        try:
+            importlib.reload(mainwindow)
+        except Exception as e:
+            self.logger.error(f"Failed to reload mainwindow module: {e}")
+            return
+        
+        # Clear the VTK viewer
+        self.vtk_workpiece.clear_view()
+        
+        # Reset model state
+        self.model.base = None
+        self.matw = None
+        self.matt = None
+        self.tool_center = (0, 0, 0)
+        
+        # Reset UI elements to default values
+        self.setupUi(self)  # Gọi lại setupUi để cập nhật giao diện
+        self.updateComboBox()  # Cập nhật lại các ComboBox
+        self.connectSignalsSlots()  # Kết nối lại các signal/slot
+        
+        # Reset UI elements to default values
+        self.wp_mat.setCurrentIndex(0)
+        self.tool_mat.setCurrentIndex(0)
+        self.tool_type.setCurrentIndex(0)
+        self.tool_distrubution.setCurrentIndex(0)
+        self.tool_mode.setCurrentIndex(0)
+        self.abrasive_shape.setCurrentIndex(0)
+        
+        self.workpiece_scale.setValue(100)
+        self.workpiece_scale_2.setValue(293)
+        self.num_step.setValue(1)
+        self.num_grains.setValue(1)
+        self.num_vertices.setValue(10)
+        self.grain_size.setValue(0.05)
+        self.spacing.setValue(200)
+        self.velocity.setValue(30.0)
+        self.initial_depth.setValue(0.0)
+        self.depth_increase.setValue(0.0)
+        self.tool_radius.setValue(100)
+        self.depth.setValue(100)
+        self.grain_scale.setValue(1)
+        
+        self.grain_redistribution.setChecked(False)
+        self.rigid_flexible.setChecked(False)
+        
+        # Clear log output
+        self.log_output.clear()
+        
+        # Log the reset action
+        self.logger.info("Application has been restarted, UI regenerated, and code reloaded.")
+
     def connectSignalsSlots(self):
         """Connects UI elements (buttons, menus) to corresponding functions.
         """
@@ -95,7 +185,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.bStart.clicked.connect(self.run_simulation_threaded)
         self.bStop.clicked.connect(self.stop_simulation)
         self.bGenerate.clicked.connect(self.generate_grains)
-
+        self.actionRe_start.triggered.connect(self.restart_application)  # Thêm dòng này
         self.vtk_workpiece = VTKMeshViewer(self.tab_workpiece)
 
     def load_gcode(self):
