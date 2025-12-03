@@ -1,6 +1,7 @@
 import numpy as np
 import subprocess
 import pickle
+import os
 
 from model.abaqus_part import BasePart
 
@@ -21,17 +22,34 @@ class Importer():
         self.part = BasePart(name)
 
     def import_base(self, filepath: str, scale: float):
-        part = None
-        file_ext = filepath.split('.')[-1]
-        importer = Importer("BASE")
-        
-        if file_ext == 'inp':
-            part = importer.from_inp_file(filepath=filepath, scale=scale)
-        elif file_ext == 'odb':
-            part = importer.from_odb_file(filepath=filepath, part_name='BASE')
-
-        print('Complete import the base')
-        return part
+        try:
+            if not os.path.exists(filepath):
+                print(f"[Error] File not found: {filepath}")
+                return None
+                
+            part = None
+            file_ext = filepath.split('.')[-1].lower()
+            
+            if file_ext not in ['inp', 'odb']:
+                print(f"[Error] Unsupported file extension: {file_ext}")
+                return None
+                
+            importer = Importer("BASE")
+            
+            if file_ext == 'inp':
+                part = importer.from_inp_file(filepath=filepath, scale=scale)
+            else:
+                part = importer.from_odb_file(filepath=filepath, part_name='BASE')
+                
+            if part is None:
+                print(f"[Error] Failed to import part from {filepath}")
+                return None
+                
+            return part
+            
+        except Exception as e:
+            print(f"[Error] Import failed: {e}")
+            return None
     
     def from_inp_file(self, filepath, scale=1):
         """Open the input file and read the data.
@@ -101,17 +119,61 @@ class Importer():
         except FileNotFoundError:
             print(f"File '{filepath}' not found.")
 
-    def from_odb_file(self, filepath, part_name):
-        base_encrypted = subprocess.Popen(["abaqus", "python", "./read_odb.py"], 
-                                          stdin=subprocess.PIPE, 
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE,
-                                          shell=True,
-                                          text=True)
-        output, _ = base_encrypted.communicate(input=filepath)
-        with open(output, "rb") as f:
-            base = pickle.load(f)
+    # def from_odb_file(self, filepath, part_name):
+    #     base_encrypted = subprocess.Popen(["abaqus", "python", "./read_odb.py"], 
+    #                                       stdin=subprocess.PIPE, 
+    #                                       stdout=subprocess.PIPE,
+    #                                       stderr=subprocess.PIPE,
+    #                                       shell=True,
+    #                                       text=True)
+    #     output, _ = base_encrypted.communicate(input=filepath)
+    #     with open(output, "rb") as f:
+    #         base = pickle.load(f)
             
-        return base
-
-    
+    #     return base
+    def from_odb_file(self, filepath, part_name):
+        try:
+            base_encrypted = subprocess.Popen(["abaqus", "python", "./read_odb.py"], 
+                                        stdin=subprocess.PIPE, 
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        shell=True,
+                                        text=True)
+            outputs, errors = base_encrypted.communicate(input=filepath)
+            
+            # Kiểm tra lỗi từ subprocess
+            if base_encrypted.returncode != 0:
+                print(f"[Error] read_odb.py failed with error: {errors}")
+                return None
+                
+            # Kiểm tra output có dữ liệu không
+            if not outputs:
+                print("[Error] No output from read_odb.py")
+                return None
+                
+            lines = outputs.splitlines()
+            if not lines:
+                print("[Error] Output has no lines")
+                return None
+                
+            output = lines[-1]
+            if part_name not in output:
+                print(f"[Error] Expected '{part_name}' in output, got: {output}")
+                return None
+                
+            try:
+                base = pickle.loads(output.encode('latin1'))
+                self.part.nodes = base['nodes']
+                self.part.elements = base['elements']
+                self.part.xrange = base['xrange']
+                self.part.yrange = base['yrange']
+                self.part.zrange = base['zrange']
+                print(f"Base '{part_name}' imported successfully from {filepath}.")
+                return base
+            except Exception as e:
+                print(f"[Error] Failed to parse output: {e}")
+                return None
+                
+        except Exception as e:
+            print(f"[Error] Failed to run read_odb.py: {e}")
+            return None

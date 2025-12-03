@@ -111,12 +111,17 @@ class BasePart(Part):
 
 
 class Grain(Part):
-    def __init__(self, name, size):
+    def __init__(self, name, size, radial_factor=0.2, angular_fluct_deg=18):
         super().__init__(name)
         self.size = size
         self.translate = [0, 0, 0]
         self.node_neighbor = {}
         self.prj_pts = []
+
+        self.radial_factor = radial_factor
+        self.angular_fluct = np.deg2rad(angular_fluct_deg)
+
+
         
 
     def gen_rand_translate(self, xrange, yrange, zrange):
@@ -369,7 +374,6 @@ class Grain(Part):
         self.nodes = [[i+1] + list(pt) for i, pt in enumerate(points)]
         self.elements = [[i+1] + [(idx+1) for idx in face] for i, face in enumerate(faces)]
         print(f"Generated flared hex mesh: {len(self.nodes)} nodes, {len(self.elements)} elements")
-
 
     def _gen_rand_spherical_points(self, num_points):
         rng = np.random.default_rng()

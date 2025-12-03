@@ -261,9 +261,18 @@ class Window(QMainWindow, Ui_MainWindow):
         self.matw.load_material(materials[self.wp_mat.currentText()])
         self.model.base.assign_material(self.matw)
         
-        for step in range(self.num_step.value()):
-            self.model.build(step)
-            self.model.run() 
+        try:
+            step = self.get_current_step()
+            result = self.model.build(step)
+            
+            if result is None:
+                print("[Error] Model build failed")
+                return
+                
+            # Continue with simulation...
+            
+        except Exception as e:
+            print(f"[Error] Simulation failed: {e}")
     
     def run_simulation_threaded(self):
         """Tạo thread để chạy mô phỏng"""
@@ -274,8 +283,12 @@ class Window(QMainWindow, Ui_MainWindow):
     def stop_simulation(self):
         """Stops the simulation."""
         self.model.stop()
-
-
         
-        
-
+    def get_current_step(self):
+        """Gets the current step value."""
+        try:
+            step = int(self.ui.stepValue.text())  # Lấy giá trị từ spinbox hoặc textbox
+            return step
+        except (ValueError, AttributeError):
+            print("[Warning] Failed to get step value, using default 0")
+            return 0

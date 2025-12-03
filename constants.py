@@ -129,4 +129,11 @@ materials = {
 tool_shapes = ["cylinder", "sphere"]
 tool_mode = ["single", "multi"]
 grain_distributions = ["random", "normal", "uniform"]
-abrasive_shapes = ["sphere", "cube", "octahedron", "dodecahedron","flared_hex", "random", "combined", "union"]
+abrasive_shapes = ["sphere", 
+                   "cube", 
+                   "octahedron", 
+                   "dodecahedron",
+                   "flared_hex", 
+                   "random", "combined", 
+                   "union", 
+                   "random_2"]

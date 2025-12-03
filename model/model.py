@@ -6,7 +6,7 @@ import subprocess
 import numpy as np
 
 from model.importer import Importer
-from model.abaqus_part import Grain
+from model.abaqus_part import Part, Grain
 from gcodeparser import GcodeParser
 
 logger = logging.getLogger("main")
@@ -89,14 +89,12 @@ class Model:
                 grain.gen_dodecahedron_mesh()
             elif seed_shape == 'flared_hex':
                 grain.gen_flared_hex_mesh(7)
-            elif seed_shape == 'cube':
-                grain.gen_cube_mesh()
+            # elif seed_shape == 'cube':
+            #     grain.gen_cube_mesh()
             elif seed_shape == 'octahedron':
                 grain.gen_octahedron_mesh()
             elif seed_shape == 'combined':
                 grain.gen_combined_mesh()
-            elif seed_shape == 'union':
-                grain.gen_union_mesh()
             elif seed_shape == 'random':
                 grain.gen_convex_hull_grain(vertices)
 
@@ -113,7 +111,7 @@ class Model:
 
     def build(self, step: int, settings=None):
         """Build the model."""
-       
+
         if self.mode == 'multiple': 
             for i, node in enumerate(self.gra_mat_pos[self.ntool_sect % (step+1)]):
                 grain = Grain('G'+str(i), 10)
@@ -165,14 +163,14 @@ class Model:
         subprocess.run(cmd_command, shell=True, capture_output=True, text=True)
 
 
-    def import_gcode(self, file_path):
-        # open gcode file and store contents as variable
-        with open(file_path, 'r') as f:
-            gcode = f.read()
+    # def import_gcode(self, file_path):
+    #     # open gcode file and store contents as variable
+    #     with open(file_path, 'r') as f:
+    #         gcode = f.read()
 
-        for line in GcodeParser(gcode).lines:
-            if line.command[0] == 'G':
-                print("ok")
+    #     for line in GcodeParser(gcode).lines:
+    #         if line.command[0] == 'G':
+    #             print("ok")
             
     
     def generate_matrix_of_grains(self, res=1, radius=1000, tool_type='cylinder', mat=None):
@@ -244,6 +242,8 @@ class Model:
                
 
     def write(self, file_path, mode=0):
+        from types import SimpleNamespace
+
         current_dir = os.getcwd()
         if not os.path.exists('.run'):
             os.makedirs('.run')
@@ -252,12 +252,18 @@ class Model:
                 file.write("!Grinding simulation process, Author: Vu Hoai Lam\n")
                 file.write("!Email: Lam.VH205731@sis.hust.edu.vn\n")
                 file.write("*PHYSICAL CONSTANTS, ABSOLUTE ZERO=0\n")
-                mats = [self.base.mat.name]
-                mat_lists = [self.base.mat]
+
+                # đảm bảo có material mặc định nếu thiếu
+                default_mat = SimpleNamespace(name='M_DEFAULT')
+                base_mat = getattr(self.base, 'mat', None) or default_mat
+
+                mats = [base_mat.name]
+                mat_lists = [base_mat]
                 for grain in self.grains:
-                    if grain.mat.name not in mats:
-                        mats.append(grain.mat.name)
-                        mat_lists.append(grain.mat)
+                    gm = getattr(grain, 'mat', None) or default_mat
+                    if gm.name not in mats:
+                        mats.append(gm.name)
+                        mat_lists.append(gm)
 
                 self._write_materials(file, mat_lists)
                 self._write_parts(file)
@@ -268,7 +274,7 @@ class Model:
                 self._write_step(file)
             file.close()
             logger.info(f"Model {file_path} is written successfully.")
-                
+            
         except FileNotFoundError:
             print(f"Cannot write to the '{self.model_name}'.")
 
@@ -583,4 +589,3 @@ class Model:
         file.write(f"CSTRESS, CFORCE, CDISP, CSLIPR, CFRICWORK,\n") 
         ## HISTORY OUTPUT
         file.write(f"*Output, history, variable=PRESELECT\n")
-        

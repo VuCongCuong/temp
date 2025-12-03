@@ -7,7 +7,7 @@ class Material():
         self.E = E
         self.u = u
     def assignHeatPre(self, Cp = 0, k=0.1):
-        """"
+        """
         Parameters:
             Cp: Specific heat per unit mass
             k: heat conductivity for isotropic conductivity
